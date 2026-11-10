@@ -1,0 +1,584 @@
+--- before/js/data.js
++++ after/js/data.js
+@@ -23,10 +23,17 @@
+     id: 'mage', name: 'Arcanista', title: 'Combatente de dano em área',
+     desc: 'Manto violeta e orbe flutuante. Detona explosões arcanas sobre grupos de inimigos.',
+     startPower: 'arcane',
+     hp: 100, speed: 160, color: 0x7b3fd0,
+     stats: { Vida: 0.5, Velocidade: 0.6, Alcance: 0.6, Área: 0.95 },
++  },
++  channeler: {
++    id: 'channeler', name: 'Canalizador', title: 'Condutor de energia',
++    desc: 'Vestes carvão, foco ciano e plasma nas mãos. Dispara esferas elétricas que atravessam a horda.',
++    startPower: 'plasma',
++    hp: 110, speed: 165, color: 0x56e7f2,
++    stats: { Vida: 0.6, Velocidade: 0.7, Alcance: 0.85, Área: 0.55 },
+   },
+ };
+ 
+ // ---------- Melhorias passivas (atributos) ----------
+ // mods: multiplicadores aplicados a todos os poderes.
+@@ -168,10 +175,70 @@
+       { text: '+14 de dano',                apply: (s) => { s.damage += 14; } },
+       { text: 'Pulsa 15% mais rápido',      apply: (s) => { s.cooldown *= 0.85; } },
+     ],
+   },
+ };
++
++// Quatro conjurações comuns; sete melhorias próprias levam cada uma ao nível 8.
++Object.assign(POWERS, {
++  cyclone: {
++    id: 'cyclone', name: 'Mini Tornado', icon: 'cyclone',
++    desc: 'Vórtices móveis varrem a horda e puxam levemente inimigos comuns.',
++    base: { damage: 8, cooldown: 2.4, count: 1, speed: 115, range: 390, radius: 38, duration: 2.3, hitCd: 0.3, pull: 35 },
++    upgrades: [
++      { text: '+4 de dano por volta', apply: s => { s.damage += 4; } },
++      { text: '+12 de raio do vórtice', apply: s => { s.radius += 12; } },
++      { text: 'Dois tornados por conjuração', apply: s => { s.count = 2; } },
++      { text: 'Ventos 18% mais frequentes', apply: s => { s.cooldown *= 0.82; } },
++      { text: '+35 de velocidade e +90 de alcance', apply: s => { s.speed += 35; s.range += 90; } },
++      { text: '+6 de dano e +0,5 s de duração', apply: s => { s.damage += 6; s.duration += 0.5; } },
++      { text: 'Três tornados e voltas 15% mais rápidas', apply: s => { s.count = 3; s.hitCd *= 0.85; } },
++    ],
++  },
++  radiant_beam: {
++    id: 'radiant_beam', name: 'Feixe de Luz', icon: 'radiant_beam',
++    desc: 'Sustenta uma faixa branca e dourada que atravessa todos os alvos.',
++    base: { damage: 10, cooldown: 2.6, range: 440, width: 26, duration: 0.8, hitCd: 0.2 },
++    upgrades: [
++      { text: '+5 de dano por pulso', apply: s => { s.damage += 5; } },
++      { text: '+14 de largura luminosa', apply: s => { s.width += 14; } },
++      { text: '+0,25 s de canalização', apply: s => { s.duration += 0.25; } },
++      { text: 'Canaliza 15% mais frequentemente', apply: s => { s.cooldown *= 0.85; } },
++      { text: '+110 de alcance da luz', apply: s => { s.range += 110; } },
++      { text: '+7 de dano por pulso', apply: s => { s.damage += 7; } },
++      { text: 'Pulsos 20% mais rápidos e +10 de largura', apply: s => { s.hitCd *= 0.8; s.width += 10; } },
++    ],
++  },
++  plasma: {
++    id: 'plasma', name: 'Plasma', icon: 'plasma',
++    desc: 'Esferas ciano com núcleo elétrico perfuram a horda e deixam rastros.',
++    base: { damage: 16, cooldown: 1.1, count: 1, speed: 440, range: 570, radius: 10, pierce: 1, spread: 0.13 },
++    upgrades: [
++      { text: '+1 esfera por descarga', apply: s => { s.count += 1; } },
++      { text: '+6 de dano de plasma', apply: s => { s.damage += 6; } },
++      { text: 'Perfura +1 alvo', apply: s => { s.pierce += 1; } },
++      { text: 'Descargas 16% mais rápidas', apply: s => { s.cooldown *= 0.84; } },
++      { text: '+1 esfera e +90 de alcance', apply: s => { s.count += 1; s.range += 90; } },
++      { text: '+8 de dano e +4 de raio', apply: s => { s.damage += 8; s.radius += 4; } },
++      { text: 'Perfura +2 alvos e +100 de velocidade', apply: s => { s.pierce += 2; s.speed += 100; } },
++    ],
++  },
++  meteor: {
++    id: 'meteor', name: 'Chuva de Meteoros', icon: 'meteor',
++    desc: 'Anuncia impactos no chão antes de uma queda de fogo e ondas de choque.',
++    base: { damage: 38, cooldown: 3.4, count: 1, range: 460, radius: 66, warning: 0.78 },
++    upgrades: [
++      { text: '+14 de dano de impacto', apply: s => { s.damage += 14; } },
++      { text: '+18 de raio da cratera', apply: s => { s.radius += 18; } },
++      { text: 'Dois meteoros por chuva', apply: s => { s.count = 2; } },
++      { text: 'Chuvas 16% mais frequentes', apply: s => { s.cooldown *= 0.84; } },
++      { text: '+100 de alcance e aviso 0,1 s menor', apply: s => { s.range += 100; s.warning -= 0.1; } },
++      { text: '+20 de dano e +12 de raio', apply: s => { s.damage += 20; s.radius += 12; } },
++      { text: 'Três meteoros e +10 de dano', apply: s => { s.count = 3; s.damage += 10; } },
++    ],
++  },
++});
+ 
+ // Armas adicionais: oito níveis completos.
+ for (const [id, name, desc, base] of [
+   ['axes', 'Machados do Crepúsculo', 'Machados descrevem arcos e retornam, cortando na ida e na volta.', { damage: 20, cooldown: 1.8, count: 2, range: 280, radius: 22 }],
+   ['frost', 'Estilhaços de Gelo', 'Uma onda congela o avanço dos inimigos com lentidão.', { damage: 14, cooldown: 2.1, range: 260, radius: 95 }],
+--- before/js/powers.js
++++ after/js/powers.js
+@@ -35,19 +35,25 @@
+   cd() { return this.s.cooldown / this.player.mods.rate; }
+   range() { return (this.s.range || 0) * this.player.mods.range; }
+   area(v) { return v * this.player.mods.area; }
+ 
+   update(dt) {
++    if (this.destroyed) return;
+     for (let i = this.pending.length - 1; i >= 0; i--) {
+       const e = this.pending[i]; e.t -= dt;
+       if (e.t <= 0) { this.pending.splice(i, 1); e.fn(); }
+     }
+     this.impl.update(this, dt);
+   }
+-  after(t, fn) { this.pending.push({ t, fn }); }
++  after(t, fn) { if (!this.destroyed) this.pending.push({ t, fn }); }
+   cast() { this.player.pulse = 0.16; }   // pequena "pulsada" no sprite ao atacar
+-  destroy() { if (this.impl.destroy) this.impl.destroy(this); this.pending.length = 0; }
++  destroy() {
++    if (this.destroyed) return;
++    this.destroyed = true;
++    if (this.impl.destroy) this.impl.destroy(this);
++    this.pending.length = 0;
++  }
+ }
+ 
+ // Utilitários de mira
+ function nearestEnemies(scene, x, y, r, n) {
+   const arr = scene.queryEnemies(x, y, r, scene.tmpA);
+@@ -75,34 +81,60 @@
+       s.setTexture(o.tex).setPosition(o.x, o.y).setRotation(o.ang).setVisible(true).setActive(true).setScale(o.scale || 1);
+       s.setBlendMode(o.add ? Phaser.BlendModes.ADD : Phaser.BlendModes.NORMAL);
+       s.vx = Math.cos(o.ang) * o.speed; s.vy = Math.sin(o.ang) * o.speed;
+       s.life = o.range / o.speed; s.dmg = o.dmg; s.pierce = o.pierce; s.rad = o.radius;
+       s.explode = o.explode || 0; s.kind = o.kind; s.powerId = o.powerId; s.knock = o.knock || 60;
+-      s.trail = o.trail || null; s.trailTimer = 0;
++      s.trail = o.trail || null; s.trailTimer = 0; s.boltTimer = 0;
++      s.owner = o.owner || null;
++      s.age = 0;
+       s.setDepth(9100);
+       return s;
+     }
+     return null;
+   }
+-  kill(s) { s.live = false; s.setVisible(false).setActive(false); }
++  kill(s) { s.live = false; s.owner = null; s.setVisible(false).setActive(false); }
+   update(dt) {
+     const sc = this.scene;
+     for (const s of this.items) {
+       if (!s.live) continue;
++      if (s.owner && s.owner.destroyed) { this.kill(s); continue; }
++      const oldX = s.x, oldY = s.y;
+       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
++      s.age += dt;
+       if (s.trail) { s.trailTimer -= dt; if (s.trailTimer <= 0) { sc.fx.burst(s.trail, s.x, s.y, 1); s.trailTimer = 0.035; } }
++      if (s.kind === 'plasma') {
++        s.setFrame(Math.floor(s.age * 18) % 4);
++        s.boltTimer -= dt;
++        if (s.boltTimer <= 0) {
++          const speed = Math.hypot(s.vx, s.vy) || 1;
++          sc.fx.bolt(s.x - s.vx / speed * 32, s.y - s.vy / speed * 32, s.x, s.y, 0.1, 0x72f0ff);
++          s.boltTimer = 0.12;
++        }
++      }
+       let done = s.life <= 0;
+       if (!done && sc.world.outside(s.x, s.y)) done = true;
+       if (!done) {
+-        sc.grid.query(s.x, s.y, s.rad, this.tmp);
++        if (s.kind === 'plasma') {
++          // Sweep the segment: fast plasma still hits at the game's largest dt.
++          const travel = Math.hypot(s.x - oldX, s.y - oldY);
++          sc.grid.query((oldX + s.x) / 2, (oldY + s.y) / 2, s.rad + travel / 2, this.tmp);
++          this.tmp.sort((a, b) => Math.hypot(a.x - oldX, a.y - oldY) - Math.hypot(b.x - oldX, b.y - oldY));
++        } else sc.grid.query(s.x, s.y, s.rad, this.tmp);
+         for (let i = 0; i < this.tmp.length; i++) {
+           const e = this.tmp[i];
++          if (!e.alive) continue;
++          if (s.kind === 'plasma') {
++            const dx = s.x - oldX, dy = s.y - oldY, len2 = dx * dx + dy * dy;
++            const along = len2 ? Math.max(0, Math.min(1, ((e.x - oldX) * dx + (e.y - oldY) * dy) / len2)) : 0;
++            if (Math.hypot(e.x - oldX - dx * along, e.y - oldY - dy * along) > s.rad + e.radius) continue;
++          }
+           if (s.hit.indexOf(e.uid) >= 0) continue;
+           s.hit.push(e.uid);
+           if (s.explode) { done = true; break; }
+-          sc.damageEnemy(e, s.dmg, { x: s.x, y: s.y, knock: s.knock, kind: 'proj' });
++          sc.damageEnemy(e, s.dmg, { x: s.x, y: s.y, knock: s.knock, kind: s.kind === 'plasma' ? 'plasma' : 'proj' });
+           sc.fx.burst('spark', s.x, s.y, 3);
++          if (s.kind === 'plasma') sc.fx.ring(e.x, e.y, 3, s.rad * 2.4, 0.18, 0x68efff, 2, 0);
+           s.pierce--;
+           if (s.pierce <= 0) { done = true; break; }
+         }
+       }
+       if (done) {
+@@ -481,5 +513,187 @@
+         e.hitT.celestial_ring = sc.t; sc.damageEnemy(e, p.dmg(), { x: pl.x, y: pl.y, knock: 180, kind: 'celestial_ring' });
+       }
+     }
+   },
+ };
++
++// New common weapons own a fixed set of reusable visuals. All transient sparks,
++// rings and bolts use FX's existing shared pools; plasma uses PlayerShots only.
++POWER_IMPL.cyclone = {
++  init(p) {
++    p.state.vortices = Array.from({ length: 6 }, () => ({
++      life: 0, sprite: p.scene.add.image(0, 0, 'fx_cyclone', 0).setOrigin(0.5, 0.8).setDepth(9080).setVisible(false),
++    }));
++  },
++  update(p, dt) {
++    const sc = p.scene, pl = p.player;
++    p.timer -= dt;
++    if (p.timer <= 0) {
++      const target = nearestEnemies(sc, pl.x, pl.y, p.range(), 1)[0];
++      p.timer = target ? p.cd() : 0.12;
++      if (target) {
++        const aim = Math.atan2(target.y - pl.y, target.x - pl.x);
++        let cast = false;
++        for (let n = 0; n < p.s.count; n++) {
++          const v = p.state.vortices.find(v => v.life <= 0);
++          if (!v) break;
++          const a = aim + (n - (p.s.count - 1) / 2) * 0.3;
++          Object.assign(v, { x: pl.x, y: pl.y, vx: Math.cos(a) * p.s.speed, vy: Math.sin(a) * p.s.speed,
++            life: Math.min(p.s.duration, p.range() / p.s.speed), age: 0, tick: 0, fx: 0 });
++          v.sprite.setVisible(true); cast = true;
++        }
++        if (cast) p.cast();
++      }
++    }
++    for (const v of p.state.vortices) {
++      if (v.life <= 0) continue;
++      v.life -= dt;
++      if (v.life <= 0) { v.sprite.setVisible(false); continue; }
++      v.age += dt; v.tick -= dt; v.fx -= dt;
++      v.x += v.vx * dt; v.y += v.vy * dt;
++      const radius = p.area(p.s.radius), pulse = 1 + Math.sin(v.age * 15) * 0.06;
++      v.sprite.setPosition(v.x, v.y).setFrame(Math.floor(v.age * 16) % 4)
++        .setDisplaySize(radius * 2.5 * pulse, radius * 2.9).setAlpha(Math.min(0.9, v.life * 3));
++      const enemies = sc.queryEnemies(v.x, v.y, radius, sc.tmpB).slice();
++      for (const e of enemies) {
++        if (!e.alive) continue;
++        if (!e.isBoss && !e.isMiniBoss) {
++          const dx = v.x - e.x, dy = v.y - e.y, distance = Math.hypot(dx, dy) || 1;
++          const pull = Math.min(distance, p.s.pull * dt * (e.def?.kb ?? 1));
++          e.x += dx / distance * pull; e.y += dy / distance * pull;
++        }
++        if (v.tick <= 0) sc.damageEnemy(e, p.dmg(), { x: v.x, y: v.y, knock: 0, kind: 'cyclone' });
++      }
++      if (v.tick <= 0) v.tick = p.s.hitCd;
++      if (v.fx <= 0) {
++        sc.fx.ring(v.x, v.y, radius * 0.25, radius, 0.24, 0xa9dfd2, 2, 0);
++        sc.fx.burst('spark', v.x - v.vx * 0.1, v.y - v.vy * 0.1, 1);
++        v.fx = 0.24;
++      }
++    }
++  },
++  destroy(p) { for (const v of p.state.vortices) { v.life = 0; v.sprite.destroy(); } },
++};
++
++POWER_IMPL.radiant_beam = {
++  init(p) {
++    p.state.life = 0;
++    p.state.sprite = p.scene.add.image(0, 0, 'fx_radiant_beam', 0).setOrigin(0, 0.5)
++      .setDepth(9090).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
++  },
++  update(p, dt) {
++    const sc = p.scene, pl = p.player, st = p.state;
++    p.timer -= dt;
++    if (p.timer <= 0 && st.life <= 0) {
++      const target = nearestEnemies(sc, pl.x, pl.y, p.range(), 1)[0];
++      if (!target) { p.timer = 0.12; return; }
++      st.angle = Math.atan2(target.y - (pl.y - 6), target.x - pl.x);
++      st.life = p.s.duration; st.age = 0; st.tick = 0; st.fx = 0;
++      p.timer = p.cd(); p.cast(); st.sprite.setVisible(true);
++      sc.fx.ring(pl.x, pl.y - 6, 4, p.area(p.s.width), 0.24, 0xffdb7d, 2, 0);
++    }
++    if (st.life <= 0) return;
++    st.life -= dt;
++    if (st.life <= 0) { st.sprite.setVisible(false); return; }
++    st.age += dt; st.tick -= dt; st.fx -= dt;
++    const x = pl.x, y = pl.y - 6, length = p.range(), width = p.area(p.s.width);
++    const dx = Math.cos(st.angle), dy = Math.sin(st.angle);
++    st.sprite.setPosition(x, y).setRotation(st.angle).setFrame(Math.floor(st.age * 20) % 4)
++      .setDisplaySize(length, width * (1 + Math.sin(st.age * 32) * 0.08)).setAlpha(Math.min(0.88, st.life * 6));
++    if (st.tick <= 0) {
++      const targets = sc.queryEnemies(x + dx * length / 2, y + dy * length / 2, length / 2 + width, sc.tmpB).slice();
++      for (const e of targets) {
++        const ex = e.x - x, ey = e.y - y, along = ex * dx + ey * dy;
++        if (!e.alive || along < -e.radius || along > length + e.radius || Math.abs(ex * dy - ey * dx) > width / 2 + e.radius) continue;
++        sc.damageEnemy(e, p.dmg(), { x, y, knock: 12, kind: 'radiant_beam' });
++        sc.fx.burst('spark', e.x, e.y, 1);
++      }
++      st.tick = p.s.hitCd;
++    }
++    if (st.fx <= 0) {
++      sc.fx.bolt(x, y, x + dx * length, y + dy * length, 0.13, 0xffe6a1);
++      st.fx = 0.2;
++    }
++  },
++  destroy(p) { p.state.life = 0; p.state.sprite.destroy(); },
++};
++
++POWER_IMPL.plasma = {
++  update(p, dt) {
++    p.timer -= dt;
++    if (p.timer > 0) return;
++    const sc = p.scene, pl = p.player;
++    const target = nearestEnemies(sc, pl.x, pl.y, p.range(), 1)[0];
++    if (!target) { p.timer = 0.12; return; }
++    p.timer = p.cd();
++    const angle = Math.atan2(target.y - (pl.y - 6), target.x - pl.x);
++    let fired = false;
++    for (let n = 0; n < p.s.count; n++) {
++      const shot = sc.pShots.fire({ tex: 'p_plasma', x: pl.x, y: pl.y - 6,
++        ang: angle + (n - (p.s.count - 1) / 2) * p.s.spread, speed: p.s.speed,
++        range: p.range(), radius: p.area(p.s.radius), dmg: p.dmg(), pierce: p.s.pierce,
++        scale: p.area(p.s.radius) / 10, kind: 'plasma', powerId: 'plasma', owner: p,
++        add: true, trail: 'spark', knock: 65 });
++      if (!shot) break;
++      fired = true;
++    }
++    if (fired) p.cast();
++  },
++  destroy(p) { for (const s of p.scene.pShots.items) if (s.live && s.owner === p) p.scene.pShots.kill(s); },
++};
++
++POWER_IMPL.meteor = {
++  init(p) {
++    p.state.meteors = Array.from({ length: 8 }, () => ({ life: 0,
++      mark: p.scene.add.image(0, 0, 'fx_meteor_mark', 0).setDepth(6).setAlpha(0.75).setVisible(false),
++      rock: p.scene.add.image(0, 0, 'p_meteor').setDepth(9130).setVisible(false),
++    }));
++  },
++  update(p, dt) {
++    const sc = p.scene, pl = p.player;
++    p.timer -= dt;
++    if (p.timer <= 0) {
++      const targets = nearestEnemies(sc, pl.x, pl.y, p.range(), p.s.count);
++      p.timer = targets.length ? p.cd() : 0.15;
++      let cast = false;
++      for (let n = 0; targets.length && n < p.s.count; n++) {
++        const m = p.state.meteors.find(m => m.life <= 0);
++        if (!m) break;
++        const target = targets[n % targets.length];
++        // Never retain a pooled enemy object across the warning delay.
++        const angle = n * 2.39996, offset = n >= targets.length ? p.area(p.s.radius) * 0.55 : 0;
++        Object.assign(m, { x: target.x + Math.cos(angle) * offset, y: target.y + Math.sin(angle) * offset,
++          life: p.s.warning + n * 0.12, age: 0, trail: 0, radius: p.area(p.s.radius), damage: p.dmg() });
++        m.mark.setPosition(m.x, m.y).setDisplaySize(m.radius * 2, m.radius * 2).setVisible(true);
++        m.rock.setVisible(false); cast = true;
++      }
++      if (cast) p.cast();
++    }
++    for (const m of p.state.meteors) {
++      if (m.life <= 0) continue;
++      m.life -= dt; m.age += dt; m.trail -= dt;
++      if (m.life <= 0) {
++        m.mark.setVisible(false); m.rock.setVisible(false);
++        for (const e of sc.queryEnemies(m.x, m.y, m.radius, sc.tmpB).slice()) {
++          if (e.alive) sc.damageEnemy(e, m.damage, { x: m.x, y: m.y, knock: 175, kind: 'meteor' });
++        }
++        sc.fx.burst('fire', m.x, m.y, 10);
++        sc.fx.embers(m.x, m.y, 8);
++        sc.fx.ring(m.x, m.y, m.radius * 0.12, m.radius * 1.1, 0.4, 0xffa14c, 4, 0.08);
++        sc.fx.ring(m.x, m.y, 4, m.radius * 0.7, 0.22, 0xffedac, 2, 0);
++        sc.cameras.main.shake(85, 0.002);
++        continue;
++      }
++      m.mark.setFrame(Math.floor(m.age * 10) % 4).setAlpha(0.45 + Math.sin(m.age * 17) * 0.14);
++      if (m.life < 0.34) {
++        const fall = m.life / 0.34;
++        m.rock.setVisible(true).setPosition(m.x - fall * 105, m.y - fall * 260 - 18)
++          .setScale(1 + (1 - fall) * 0.2);
++        if (m.trail <= 0) {
++          sc.fx.burst('fire', m.rock.x - 6, m.rock.y - 12, 2);
++          sc.fx.embers(m.rock.x, m.rock.y, 1); m.trail = 0.06;
++        }
++      }
++    }
++  },
++  destroy(p) { for (const m of p.state.meteors) { m.life = 0; m.mark.destroy(); m.rock.destroy(); } },
++};
+--- before/js/progression.js
++++ after/js/progression.js
+@@ -85,15 +85,19 @@
+   }
+   destroy() { for (const c of this.chests) c.sprite.destroy(); this.chests.length = 0; }
+ }
+ 
+ function drawProgressionAssets(scene) {
+-  const colors = { axes: '#aebbd0', frost: '#8eeaff', poison: '#8bcc60', soulblade: '#bdf8e0', tempest: '#a4cfff', inferno: '#ff8845', reaper_axes: '#e2bae8', blizzard: '#c3f5ff', miasma: '#b5db67', celestial_ring: '#ffdd81', singularity: '#c393ee', smoke_dash: '#aab6c9' };
++  const colors = { axes: '#aebbd0', frost: '#8eeaff', poison: '#8bcc60', soulblade: '#bdf8e0', tempest: '#a4cfff', inferno: '#ff8845', reaper_axes: '#e2bae8', blizzard: '#c3f5ff', miasma: '#b5db67', celestial_ring: '#ffdd81', singularity: '#c393ee', smoke_dash: '#aab6c9', cyclone: '#b9ead9', radiant_beam: '#ffe4a0', plasma: '#5aeaff', meteor: '#ff9a43' };
+   for (const [id, color] of Object.entries(colors)) {
+     SPR.make(scene, 'i_' + id, 16, 16, 1, 3, P => {
+       P.r(1, 1, 14, 14, '#171323'); P.r(2, 2, 12, 1, '#4b3f61');
+-      if (id.includes('axes')) { P.line(5, 13, 10, 3, '#8b6849', 2); P.r(5, 3, 7, 4, color); P.r(4, 4, 2, 4, color); P.r(10, 3, 3, 6, color); }
++      if (id === 'cyclone') { P.r(3, 4, 10, 2, color); P.r(4, 7, 8, 2, '#6caeab'); P.r(6, 10, 5, 2, color); P.r(7, 12, 2, 2, '#effff6'); P.r(4, 4, 5, 1, '#f2fff5'); }
++      else if (id === 'radiant_beam') { P.line(3, 12, 12, 3, '#b98239', 5); P.line(3, 12, 12, 3, color, 3); P.line(4, 12, 12, 4, '#ffffff', 1); P.r(3, 8, 1, 4, color); P.r(10, 12, 3, 1, color); }
++      else if (id === 'plasma') { P.line(3, 12, 9, 6, '#277fbb', 3); P.disc(9, 7, 5, '#196ca0'); P.disc(9, 7, 4, color); P.disc(9, 7, 2, '#f4ffff'); P.p(13, 11, color); P.p(3, 5, color); }
++      else if (id === 'meteor') { P.line(3, 3, 10, 10, '#d6542d', 4); P.line(6, 3, 11, 9, '#ffc66a', 2); P.disc(10, 10, 4, color); P.disc(10, 10, 2, '#5b3943'); P.p(12, 9, '#ffe2a2'); }
++      else if (id.includes('axes')) { P.line(5, 13, 10, 3, '#8b6849', 2); P.r(5, 3, 7, 4, color); P.r(4, 4, 2, 4, color); P.r(10, 3, 3, 6, color); }
+       else if (id === 'frost' || id === 'blizzard') { P.line(8, 3, 8, 13, color); P.line(3, 5, 12, 11, color); P.line(3, 11, 12, 5, color); P.r(7, 6, 3, 4, '#f1ffff'); }
+       else if (id === 'poison' || id === 'miasma' || id === 'smoke_dash') { P.disc(6, 8, 3, color); P.disc(10, 7, 3, color); P.disc(9, 11, 3, color); P.p(5, 7, '#f0ffd6'); }
+       else if (id === 'soulblade') { P.line(5, 12, 11, 3, color, 2); P.line(4, 9, 9, 12, '#b9904a'); }
+       else if (id === 'tempest') { P.line(10, 3, 5, 8, color, 2); P.line(5, 8, 10, 8, color, 2); P.line(10, 8, 6, 13, color, 2); }
+       else { P.disc(8, 8, 5, color); P.disc(8, 8, 3, '#24192f'); P.r(7, 2, 2, 3, '#fff2d5'); P.r(7, 11, 2, 3, color); }
+@@ -105,10 +109,62 @@
+     if (['poison','inferno','miasma','singularity'].includes(id)) SPR.make(scene, 'fx_' + id, 24, 24, 1, 2, P => {
+       P.disc(12, 12, 11, '#251b30'); P.disc(12, 12, 9, color); P.disc(12, 12, 6, '#302339');
+       for (let i = 0; i < 6; i++) P.disc(12 + Math.round(Math.cos(i) * 8), 12 + Math.round(Math.sin(i) * 8), 2, color);
+     });
+   }
++  SPR.make(scene, 'fx_cyclone', 48, 56, 4, 2, (P, f) => {
++    // A tapered silhouette and shifting crescent bands read as wind, not an orb.
++    const phases = [0, 3, 0, -3];
++    for (let band = 0; band < 6; band++) {
++      const y = 6 + band * 7, half = 21 - band * 3, shift = phases[(f + band) % 4];
++      P.r(24 - half + shift, y + 2, half * 2, 3, '#315854');
++      P.r(24 - half + shift + 1, y, half * 2 - 2, 2, '#72aaa0');
++      P.r(24 - half + shift + 3, y, half + 1, 2, '#d8f5df');
++      P.r(24 + half + shift - 3, y + 2, 3, 2, '#9cd7c5');
++    }
++    P.r(21, 47, 5, 3, '#dff5d7');
++    const leafX = [4, 35, 30, 8][f], leafY = [20, 12, 36, 31][f];
++    P.line(leafX, leafY, leafX + 5, leafY - 2, '#b3b276', 2);
++    P.r(8 + f * 7, 51, 5, 1, '#72aaa0');
++  });
++  SPR.make(scene, 'fx_radiant_beam', 80, 18, 4, 1, (P, f) => {
++    P.r(1, 2, 78, 14, '#6d4e20'); P.r(0, 4, 80, 10, '#b78f42');
++    P.r(0, 6, 80, 6, '#ffe6a1'); P.r(0, 8, 80, 2, '#ffffff');
++    for (let n = 0; n < 5; n++) {
++      const x = (n * 17 + f * 6) % 77;
++      P.line(x, 2, x + 5, 7, '#fff0ba'); P.line(x, 15, x + 5, 10, '#fff0ba');
++    }
++    P.r(1, 4, 2, 10, '#ffffff'); P.r(77, 5, 2, 8, '#fff5d0');
++  });
++  SPR.make(scene, 'p_plasma', 24, 18, 4, 2, (P, f) => {
++    P.line(0, 8, 11, 8, '#195a97', 3);
++    P.line(2, 6 + f % 2, 8, 10 - f % 2, '#58cdec');
++    P.disc(13, 9, 7, '#174b80'); P.disc(13, 9, 6, '#279bcc');
++    P.disc(13, 9, 4, '#6ff5ff'); P.disc(14, 8, 2, '#f1ffff');
++    const a = f * Math.PI / 2;
++    P.line(13 + Math.cos(a) * 4, 9 + Math.sin(a) * 4, 13 + Math.cos(a + .6) * 8, 9 + Math.sin(a + .6) * 8, '#caffff');
++    P.p(2 + f, 13 - f, '#88efff');
++  });
++  SPR.make(scene, 'p_meteor', 28, 40, 1, 2, P => {
++    P.line(4, 0, 18, 28, '#9b3428', 7); P.line(10, 2, 22, 29, '#f77936', 5);
++    P.line(13, 9, 22, 29, '#ffc56a', 3); P.line(2, 12, 13, 29, '#f77936', 3);
++    P.disc(18, 30, 9, '#b44d30'); P.disc(18, 30, 7, '#ffbc55');
++    P.disc(19, 31, 5, '#61404a'); P.r(15, 27, 5, 3, '#977168');
++    P.line(16, 31, 20, 34, '#ef783d', 2); P.p(22, 28, '#ffedb5');
++  });
++  SPR.make(scene, 'fx_meteor_mark', 48, 48, 4, 2, (P, f) => {
++    for (let n = 0; n < 36; n++) {
++      const a = n * Math.PI / 18;
++      const x = Math.round(24 + Math.cos(a) * 21), y = Math.round(24 + Math.sin(a) * 21);
++      P.r(x, y, 2, 2, n % 3 === f % 3 ? '#ffe1a4' : '#b77535');
++    }
++    for (let n = 0; n < 4; n++) {
++      const a = n * Math.PI / 2 + f * .08;
++      P.line(24 + Math.cos(a) * 12, 24 + Math.sin(a) * 12, 24 + Math.cos(a) * 17, 24 + Math.sin(a) * 17, '#ffe1a4', 2);
++    }
++    P.line(20, 24, 28, 24, '#e8b16b'); P.line(24, 20, 24, 28, '#e8b16b');
++  });
+   SPR.make(scene, 'progression_chest', 20, 16, 1, 2, P => {
+     P.r(2, 5, 16, 10, '#1c1426'); P.r(3, 6, 14, 8, '#65435e'); P.r(4, 3, 12, 4, '#9c6c6b');
+     P.r(3, 7, 14, 2, '#d6ac61'); P.r(5, 4, 2, 10, '#bd9857'); P.r(13, 4, 2, 10, '#bd9857');
+     P.r(8, 7, 4, 5, '#edce83'); P.r(9, 8, 2, 2, '#35263f');
+   });
+--- before/tests/new_powers_checks.cjs
++++ after/tests/new_powers_checks.cjs
+@@ -0,0 +1,120 @@
++// Pure combat checks: run the real catalogs, weapon logic and shot pool in a VM.
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++const ids = ['cyclone', 'radiant_beam', 'plasma', 'meteor'];
++const context = vm.createContext({ console, Math, Set, Map, CONFIG: { maxPlayerShots: 160 }, Phaser: { BlendModes: { ADD: 1, NORMAL: 0 } } });
++for (const file of ['data.js', 'powers.js', 'progression.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../js', file), 'utf8'), context, { filename: file });
++const api = vm.runInContext('({POWERS, CHARACTERS, POWER_IMPL, PowerInstance, PlayerShots, drawProgressionAssets})', context);
++function sprite(x, y, texture) {
++  const s = { x, y, texture, visible: true, destroyed: false };
++  for (const method of ['setDepth', 'setAlpha', 'setScale', 'setRotation', 'setBlendMode', 'setFrame', 'setOrigin', 'setDisplaySize', 'setTint']) s[method] = function (...args) { this[method.slice(3)] = args; return this; };
++  s.setPosition = function (x, y) { this.x = x; this.y = y; return this; };
++  s.setTexture = function (t) { this.texture = t; return this; };
++  s.setVisible = function (v) { this.visible = v; return this; };
++  s.setActive = function (v) { this.active = v; return this; };
++  s.destroy = function () { this.destroyed = true; this.visible = false; };
++  return s;
++}
++function fixture(id, level = 1, mods = {}) {
++  const enemies = [], sprites = [], hits = [];
++  const query = (x, y, r, out = []) => { out.length = 0; for (const e of enemies) if (e.alive && Math.hypot(e.x - x, e.y - y) <= r + e.radius) out.push(e); return out; };
++  const sc = { t: 0, tmpA: [], tmpB: [], tmpC: [], queryEnemies: query, grid: { query }, world: { outside: () => false },
++    fx: Object.fromEntries(['ring', 'burst', 'bolt', 'embers', 'teleCircle'].map(k => [k, () => {}])), cameras: { main: { shake() {} } },
++    add: { image(x, y, texture) { const s = sprite(x, y, texture); sprites.push(s); return s; } },
++    damageEnemy(e, damage, source) { if (!e.alive) return; e.hp -= damage; hits.push({ uid: e.uid, damage, source }); if (e.hp <= 0) e.alive = false; },
++  };
++  const player = { x: 0, y: 0, aim: { x: 1, y: 0 }, mods: { damage: 1, rate: 1, range: 1, area: 1, ...mods } };
++  sc.pShots = new api.PlayerShots(sc);
++  const power = new api.PowerInstance(sc, player, api.POWERS[id]);
++  while (power.level < level) power.levelUp();
++  function enemy(x, y, options = {}) { const e = { x, y, uid: enemies.length + 1, hp: 1e7, radius: 10, alive: true, hitT: {}, def: { kb: 1 }, ...options }; enemies.push(e); return e; }
++  function step(duration, dt = .01) { for (let t = 0; t < duration - 1e-8; t += dt) { sc.t += dt; power.update(dt); sc.pShots.update(dt); } }
++  return { sc, player, power, enemies, sprites, hits, enemy, step };
++}
++let checks = 0;
++function check(name, fn) { try { fn(); checks++; console.log('PASS', name); } catch (err) { console.error('FAIL', name); throw err; } }
++
++check('four common catalog entries, seven distinct upgrades and channeler starting values', () => {
++  for (const id of ids) {
++    assert.ok(api.POWERS[id], 'missing common weapon ' + id);
++    assert.ok(api.POWER_IMPL[id]);
++    assert.notEqual(api.POWERS[id].obtainable, false);
++    assert.equal(api.POWERS[id].upgrades.length, 7);
++    assert.equal(new Set(api.POWERS[id].upgrades.map(u => u.text)).size, 7);
++    const f = fixture(id); const start = { ...f.power.s };
++    for (let n = 0; n < 7; n++) { const before = JSON.stringify(f.power.s); f.power.levelUp(); assert.notEqual(JSON.stringify(f.power.s), before); }
++    assert.equal(f.power.maxed, true); f.power.levelUp(); assert.equal(f.power.level, 8);
++    assert.ok(f.power.s.damage > start.damage); f.power.destroy();
++  }
++  assert.equal(api.CHARACTERS.channeler.hp, 110);
++  assert.equal(api.CHARACTERS.channeler.speed, 165);
++  assert.equal(api.CHARACTERS.channeler.startPower, 'plasma');
++});
++
++for (const id of ids) for (const level of [1, 8]) check(id + ' level ' + level + ' deals real modified damage and stops after destroy', () => {
++  const f = fixture(id, level, { damage: 1.6, area: 1.2, range: 1.2, rate: 1.3 });
++  f.enemy(90, -6); f.step(2);
++  assert.ok(f.hits.length > 0, id + ' never damaged its target');
++  assert.ok(f.hits.some(h => Math.abs(h.damage - f.power.dmg()) < .001), 'damage modifier must reach damageEnemy');
++  assert.equal(f.power.cd(), f.power.s.cooldown / 1.3);
++  assert.equal(f.power.range(), f.power.s.range * 1.2);
++  f.power.destroy(); const before = f.hits.length;
++  f.step(5); assert.equal(f.hits.length, before, 'destroyed weapon continues to damage');
++  assert.equal(f.sc.pShots.items.filter(s => s.live).length, 0);
++  assert.ok(f.sprites.filter(s => !f.sc.pShots.items.includes(s)).every(s => s.destroyed));
++});
++
++check('beam pierces only its sustained strip and hits again by interval', () => {
++  const f = fixture('radiant_beam'); const first = f.enemy(80, -6), second = f.enemy(180, -6), side = f.enemy(140, 120), behind = f.enemy(-80, -6);
++  f.step(1.05);
++  assert.ok(f.hits.filter(h => h.uid === first.uid).length >= 2);
++  assert.ok(second.hp < 1e7); assert.equal(side.hp, 1e7); assert.equal(behind.hp, 1e7);
++});
++check('cyclone advances and gently pulls common enemies, never bosses', () => {
++  const f = fixture('cyclone'); const common = f.enemy(110, 20), boss = f.enemy(110, 20, { uid: 99, isBoss: true });
++  f.step(1);
++  assert.ok(f.hits.some(h => h.uid === common.uid));
++  assert.notEqual(common.y, 20); assert.equal(boss.x, 110); assert.equal(boss.y, 20);
++});
++check('recycled enemy object with a new UID can be hit by existing plasma shot', () => {
++  const f = fixture('plasma', 8); const e = f.enemy(50, -6);
++  f.step(.49); assert.ok(f.hits.length);
++  e.uid = 999; e.x += 10; e.hp = 1e7; e.alive = true;
++  f.step(.06); assert.ok(f.hits.some(h => h.uid === 999), 'projectile retains object reference instead of UID');
++});
++check('meteor stores impact coordinates when target object is recycled', () => {
++  const f = fixture('meteor'); const old = f.enemy(100, 0); f.step(.41);
++  old.x = 700; old.uid = 888;
++  const replacement = f.enemy(100, 0, { uid: 777 }); f.step(1.1);
++  assert.ok(replacement.hp < 1e7); assert.equal(old.hp, 1e7);
++});
++check('meteor warning cancels before impact on destroy', () => {
++  const f = fixture('meteor'); f.enemy(100, 0); f.step(.45); assert.equal(f.hits.length, 0);
++  f.power.destroy(); f.step(3); assert.equal(f.hits.length, 0);
++});
++check('plasma cleanup removes only its own pooled shots', () => {
++  const f = fixture('plasma'); f.enemy(180, -6); f.step(.42);
++  const other = f.sc.pShots.fire({ tex: 'p_arrow', x: 0, y: 1000, ang: 0, speed: 1, range: 100, dmg: 1, pierce: 1, radius: 1 });
++  f.power.destroy(); assert.equal(other.live, true); assert.equal(f.sc.pShots.items.filter(s => s.live).length, 1);
++});
++check('fixed visual budgets and global 160 shot pool hold under extreme rate modifiers', () => {
++  for (const id of ids) {
++    const f = fixture(id, 8, { rate: 1000 }); f.enemy(100, 0); const initial = f.sprites.length;
++    f.step(12, .02);
++    assert.equal(f.sc.pShots.items.length, 160);
++    assert.ok(f.sc.pShots.items.filter(s => s.live).length <= 160);
++    assert.equal(f.sprites.length, initial, id + ' allocates sprites during combat instead of reusing its budget');
++    assert.ok(initial <= 184, 'persistent visual budget exceeds 24 sprites');
++    f.power.destroy();
++  }
++});
++check('procedural icons and all four weapon textures can be generated', () => {
++  const assets = new Set();
++  context.SPR = { make(sc, key, w, h, frames, scale, draw) { assets.add(key); const pen = Object.fromEntries(['r','p','m','mp','line','disc','shadow'].map(k => [k, () => {}])); for (let f = 0; f < frames; f++) draw(pen, f); } };
++  api.drawProgressionAssets({});
++  for (const id of ids) assert.ok(assets.has('i_' + id), 'missing icon ' + id);
++  for (const tex of ['fx_cyclone', 'fx_radiant_beam', 'p_plasma', 'p_meteor', 'fx_meteor_mark']) assert.ok(assets.has(tex), 'missing combat texture ' + tex);
++});
++console.log(`new_powers_checks: ${checks} checks passed`);

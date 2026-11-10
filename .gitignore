@@ -1,0 +1,14 @@
+.private/
+admin-inicial.json
+*.sqlite3
+*.sqlite3-*
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+__pycache__/
+*.py[cod]
+.env
+.env.*
+
+.superpowers/

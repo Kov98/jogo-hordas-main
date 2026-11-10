@@ -1,0 +1,5 @@
+html, body { margin: 0; padding: 0; height: 100%; background: #07060a; overflow: hidden; }
+#game { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+#game canvas { image-rendering: pixelated; image-rendering: crisp-edges; outline: none; }
+#boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+        color: #8a8498; font: 18px "Courier New", monospace; letter-spacing: 2px; pointer-events: none; z-index: -1; }

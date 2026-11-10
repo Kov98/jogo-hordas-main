@@ -1,0 +1,354 @@
+--- before/js/forest-enemies.js
++++ after/js/forest-enemies.js
+@@ -1,13 +1,22 @@
+ // Criaturas da floresta noturna: silhuetas e animações próprias, no mesmo pool.
+ const FOREST_ENEMY_IDS = Object.freeze([
+   'forest_wolf', 'forest_spider', 'forest_wisp', 'forest_bandit',
+   'forest_rootling', 'forest_moth', 'forest_druid', 'forest_stalker',
+   'forest_boar', 'forest_snake', 'forest_raven', 'forest_sentinel',
++  'forest_witch', 'forest_storm_mage',
+ ]);
+ 
+ Object.assign(ENEMIES, {
++  forest_witch: {
++    stage:'forest', name:'Bruxa da Névoa', kind:'caster', hp:70, speed:49, dmg:8, radius:13, xp:8, from:185, weight:2.8, maxAlive:5, keep:300,
++    shell:{pattern:'curse',range:520,radius:43,delay:1.5,dmg:15,cd:6.4,col:0xc48aff,kind:'dark'},
++  },
++  forest_storm_mage: {
++    stage:'forest', name:'Mago da Tempestade', kind:'caster', hp:92, speed:46, dmg:9, radius:14, xp:10, from:310, weight:2.3, maxAlive:4, keep:320,
++    shell:{pattern:'storm',range:560,radius:35,delay:1.2,dmg:17,cd:6.8,col:0x8feaff,kind:'spark'},
++  },
+   forest_wolf: {
+     stage:'forest', name:'Lobo da Penumbra', kind:'melee', hp:18, speed:88, dmg:6, radius:12, xp:1, from:0, weight:8,
+     charge:{range:290,min:95,windup:.55,dur:.4,mul:2.7,cd:4.2,recover:.55,col:0xb2c9aa},
+   },
+   forest_spider: {
+@@ -72,12 +81,14 @@
+   {t:50,type:'swarm',enemy:'forest_moth',count:16,msg:'As mariposas cobrem a lua!'},
+   {t:85,type:'pack',list:{forest_boar:5,forest_wolf:6},msg:'A terra treme entre as raízes!'},
+   {t:120,type:'pack',list:{forest_wolf:12,forest_bandit:4},msg:'Uivos entre as árvores!'},
+   {t:175,type:'ring',enemy:'forest_snake',count:12,msg:'Sibilos surgem do lodo!'},
+   {t:195,type:'ring',enemy:'forest_spider',count:18,msg:'O brejo se move ao seu redor!'},
++  {t:235,type:'pack',list:{forest_witch:3,forest_wisp:5},msg:'Selos violetas rompem a névoa!'},
+   {t:270,type:'pack',list:{forest_rootling:8,forest_wisp:6},msg:'As raízes despertam!'},
+   {t:375,type:'pack',list:{forest_druid:2,forest_bandit:8,forest_wolf:8},msg:'O círculo dos druidas se fecha!'},
++  {t:405,type:'pack',list:{forest_storm_mage:3,forest_raven:6},msg:'A tempestade encontrou seu caminho!'},
+   {t:420,type:'swarm',enemy:'forest_raven',count:16,msg:'Os corvos encontraram sua trilha!'},
+   {t:465,type:'swarm',enemy:'forest_stalker',count:8,msg:'Algo caça nas sombras!'},
+   {t:560,type:'ring',enemy:'forest_moth',count:24,msg:'Uma nuvem de asas fúnebres!'},
+   {t:675,type:'pack',list:{forest_rootling:10,forest_druid:2,forest_spider:10},msg:'A floresta defende seu coração!'},
+   {t:735,type:'pack',list:{forest_sentinel:4,forest_rootling:6},msg:'As sentinelas abandonam as ruínas!'},
+@@ -300,15 +311,49 @@
+   P.r(5,11+bob,3,6,cloth); P.r(5,16+bob,2,2,skin); P.r(17,11+bob,2,5,cloth); P.r(18,15+bob,2,2,skin);
+   P.line(20,2+bob,23,7+bob,leather,2); P.line(23,7+bob,23,16+bob,leather); P.line(23,16+bob,20,21+bob,leather,2); P.line(20,2+bob,20,21+bob,'#d5d5b1');
+   P.r(2,13+bob,1,8,leather); P.r(1,12+bob,3,5,'#86968e'); P.r(1,12+bob,1,5,'#d9dcca');
+ }
+ 
++function drawForestWitch(P, frame) {
++  const b=frame%2, sway=[0,1,0,-1][frame], ink='#1b1727', robe='#584064', hi='#a67db5', violet='#d9a2ff';
++  P.shadow(12,22,18);
++  // Crooked brim and high bent crown separate her from the woodland druid.
++  P.line(8,7+b,12,1+b,ink,4);P.line(12,1+b,17,2+b,ink,2);
++  P.line(9,6+b,12,2+b,robe,2);P.p(15,1+b,hi);
++  P.r(3,7+b,16,2,ink);P.r(4,7+b,14,1,hi);P.p(8,6+b,violet);
++  P.r(9,9+b,6,5,ink);P.r(10,9+b,4,4,'#acaaa0');P.p(11,10+b,violet);P.r(14,11+b,2,1,'#d0c1ac');
++  P.line(8,10+b,6,16+b,'#aeb2a1',2);P.line(15,10+b,16,15+b,'#767b77',2);
++  P.r(7,13+b,9,6,ink);P.r(8,13+b,7,5,robe);P.r(7,18,10,3,robe);
++  P.line(8,14+b,6+sway,21,hi);P.line(14,15+b,17-sway,21,ink,2);
++  P.r(8+sway,21,3,1,'#b49bc1');P.r(14-sway,21,3,1,'#b49bc1');
++  P.line(8,14+b,4,17+b,robe,2);P.p(3,17+b,'#c8b9ac');P.line(15,14+b,19,15+b,hi,2);
++  P.line(20,7+b,20,22,'#836249',2);P.line(20,8+b,17,5+b,'#b18abf');
++  P.disc(20,6+b,3,'#38233e');P.disc(20,6+b,2,'#9b58bb');P.p(20,5+b,'#f0cfff');
++  P.p(2,10+frame,violet);P.p(22,13-frame,hi);P.r(10,16+b,3,1,violet);
++}
++
++function drawForestStormMage(P, frame) {
++  const b=frame%2, step=[0,1,0,-1][frame], ink='#11252e', cloth='#305563', edge='#7db6c6', cyan='#9df4ff';
++  P.shadow(12,22,19);
++  // Bare white hair, broad lightning pauldrons and a forked rod: no hat.
++  P.line(7,4+b,5,1+b,'#afc9d2',2);P.line(10,3+b,9,b,'#e5f7f7',2);P.line(14,3+b,17,1+b,edge,2);
++  P.r(7,3+b,10,6,ink);P.r(8,3+b,8,2,'#d3e9ea');P.r(9,5+b,6,4,'#829b9f');P.r(9,6+b,6,1,ink);P.p(10,6+b,cyan);P.p(14,6+b,cyan);
++  P.r(5,10+b,14,9,ink);P.r(6,10+b,12,8,cloth);P.r(7,11+b,2,6,edge);P.r(15,11+b,2,7,'#223d4c');
++  P.line(12,10+b,10,14+b,cyan);P.line(10,14+b,13,14+b,cyan);P.line(13,14+b,11,18+b,cyan);
++  P.line(5,10+b,2,7+b,edge,3);P.line(17,10+b,20,7+b,edge,3);P.p(2,7+b,cyan);P.p(20,7+b,cyan);
++  P.r(5,12+b,2,5,cloth);P.r(18,12+b,2,5,cloth);P.p(5,16+b,'#b8cbca');P.p(19,16+b,'#b8cbca');
++  P.r(8,18,3,3,ink);P.r(13,18,3,3,ink);P.r(7+step,21,5,1,edge);P.r(13-step,21,5,1,edge);
++  P.line(22,8+b,22,22,'#667b83');P.line(22,8+b,20,4+b,cyan);P.line(22,8+b,23,3+b,cyan);
++  P.p(3+frame,3+b,cyan);P.p(21-frame,10+b,'#dffeff');
++}
++
+ const forestArt = (fn, k=2) => ({custom:true,frames:4,w:24,h:24,k,visualScale:1,fn});
+ Object.assign(ENEMY_ART, {
+   forest_wolf:forestArt(drawForestWolf), forest_spider:forestArt(drawForestSpider),
+   forest_wisp:forestArt(drawForestWisp), forest_bandit:forestArt(drawForestBandit),
+   forest_rootling:forestArt(drawForestRootling), forest_moth:forestArt(drawForestMoth),
+   forest_druid:forestArt(drawForestDruid), forest_stalker:forestArt(drawForestStalker),
+   forest_boar:forestArt(drawForestBoar), forest_snake:forestArt(drawForestSnake),
+   forest_raven:forestArt(drawForestRaven), forest_sentinel:forestArt(drawForestSentinel),
++  forest_witch:forestArt(drawForestWitch), forest_storm_mage:forestArt(drawForestStormMage),
+   forest_matriarch:forestArt(drawForestMatriarch,4), forest_huntsman:forestArt(drawForestHuntsman,4),
+ });
+--- before/js/enemies.js
++++ after/js/enemies.js
+@@ -334,15 +334,26 @@
+           this.fireShots(e, Math.atan2(dy, dx), dmgScale);
+           e.atkCd = d.shot.cd * rand(0.85, 1.2);
+         }
+         // artilheiro: marca uma área no chão
+         if (sc.spawningEnabled && !sc.ended && !sc.bossStarted && d.shell && e.shellCd <= 0 && dist < d.shell.range) {
+-          sc.addHazard({ shape: 'circle', x: p.x, y: p.y, r: d.shell.radius, delay: d.shell.delay, dmg: d.shell.dmg * dmgScale, col: d.shell.col ?? (d.poison ? 0x91d442 : d.storm ? 0x8edfff : 0xff8a30), kind:d.shell.kind });
++          const shell = d.shell;
++          const mark = (x,y,delay) => sc.addHazard({ shape:'circle', x, y, r:shell.radius, delay, dmg:shell.dmg*dmgScale, col:shell.col ?? (d.poison ? 0x91d442 : d.storm ? 0x8edfff : 0xff8a30), kind:shell.kind });
++          // Coordinates are captured now; dodging never drags a marked attack.
++          mark(p.x,p.y,shell.delay);
++          if (shell.pattern === 'curse') {
++            // Three simultaneous seals form a triangle with clear escape gaps.
++            mark(p.x + nx*78 - ny*86,p.y + ny*78 + nx*86,shell.delay);
++            mark(p.x + nx*78 + ny*86,p.y + ny*78 - nx*86,shell.delay);
++          } else if (shell.pattern === 'storm') {
++            // Lightning walks along the casting direction, with staggered warnings.
++            for (let i=1;i<=2;i++) mark(p.x+nx*90*i,p.y+ny*90*i,shell.delay+.22*i);
++          }
+           if (e.isMiniBoss && d.storm) {
+             for (let i=0;i<4;i++) { const a=i*Math.PI/2+e.phase; sc.addHazard({shape:'circle',x:p.x+Math.cos(a)*110,y:p.y+Math.sin(a)*110,r:48,delay:1.45,dmg:d.shell.dmg*dmgScale,col:0x8edfff}); }
+           }
+-          sc.fx.burst(d.stage === 'forest' ? 'bone' : 'fire', e.x + (e.sprite.flipX ? -20 : 20), e.y - 6, 6);
++          sc.fx.burst(shell.pattern ? shell.kind : d.stage === 'forest' ? 'bone' : 'fire', e.x + (e.sprite.flipX ? -20 : 20), e.y - 6, 6);
+           e.shellCd = d.shell.cd * rand(0.9, 1.15);
+         }
+         // invocador
+         if (d.summon && sc.spawningEnabled && !sc.ended && !sc.bossStarted) {
+           e.summonCd -= dt;
+--- before/js/art.js
++++ after/js/art.js
+@@ -79,10 +79,25 @@
+     P.r(0, -10, 2, 10, '#5c7185'); P.r(0, -9, 1, 8, metal); P.p(0, -10, '#faffeb');
+     if (o.weapon === 'axe' || o.weapon === 'club') { P.r(-1, -10, 5, 3, '#929f9f'); P.r(3, -10, 1, 4, metal); }
+     P.r(-2, 0, 6, 1, '#b69b61'); P.r(0, 1, 1, 3, wood); P.p(0, 4, '#c7b077');
+   }
+   g.restore();
++}
++
++function drawChanneler(P, f) {
++  const b=f%2, step=[0,1,0,-1][f], ink='#101e29', charcoal='#303c49', edge='#627583', cyan='#79e7f2';
++  P.shadow(12,22,16);
++  P.r(5,9+b,13,11,ink);P.r(6,10+b,11,9,charcoal);P.line(6,10+b,6+step,20,cyan);P.line(16,10+b,17-step,20,'#387b8b');
++  for(const [x,dy] of [[8,step],[13,-step]]) {P.r(x,17,3,4,ink);P.r(x,20+dy,4,2,edge);P.r(x,20+dy,3,1,cyan);}
++  P.r(7,9+b,10,8,charcoal);P.r(8,10+b,2,6,edge);P.r(14,10+b,2,6,'#1c2b39');
++  P.line(10,10+b,12,13+b,cyan);P.line(14,10+b,12,13+b,cyan);P.r(11,13+b,2,3,'#bafaff');P.r(7,17,10,1,'#4d7d89');
++  P.r(7,3+b,10,7,ink);P.r(8,4+b,8,5,'#bf9b84');P.r(8,3+b,8,2,charcoal);P.r(8,4+b,2,2,edge);P.p(10,6+b,'#1b3546');P.p(14,6+b,cyan);
++  // Open collar and a plasma focus held forward, instead of a staff or hat.
++  P.r(6,9+b,3,3,edge);P.r(15,9+b,3,3,'#456473');P.r(4,11+b,3,5,charcoal);P.r(4,15+b,2,2,'#d9b297');
++  P.line(17,12+b,20,14+b,charcoal,3);P.r(19,14+b,3,2,'#c8b29f');
++  P.disc(21,11+b,3,'#23617b');P.disc(21,11+b,2,cyan);P.r(20,10+b,2,2,'#edffff');
++  P.line(19,8+b,18,7+b,cyan);P.p(23,8+f,cyan);P.p(19-f%2,17+b,'#aff7ff');
+ }
+ 
+ function drawRefinedHero(P, f, id) {
+   const b = f % 2, step = [0, 1, 0, -1][f % 4];
+   const mage = id === 'mage', ranger = id === 'ranger';
+--- before/js/sprites.js
++++ after/js/sprites.js
+@@ -704,10 +704,11 @@
+     P.line(0, 0, 7, 7, '#ffd37b'); P.line(1, 7, 6, 1, '#ffe6ae'); P.r(3, 3, 2, 2, '#ffffff');
+   });
+   SPR.make(scene, 'c_vanguard', 24, 24, 4, 2, (P, f) => drawRefinedHero(P, f, 'vanguard'));
+   SPR.make(scene, 'c_ranger', 24, 24, 4, 2, (P, f) => drawRefinedHero(P, f, 'ranger'));
+   SPR.make(scene, 'c_mage', 24, 24, 4, 2, (P, f) => drawRefinedHero(P, f, 'mage'));
++  SPR.make(scene, 'c_channeler', 24, 24, 4, 2, drawChanneler);
+   SPR.make(scene, 'boss', 32, 32, 4, 4, drawRefinedBoss);
+   for (const id of Object.keys(ENEMY_ART)) {
+     const a = ENEMY_ART[id];
+     if (a.custom) SPR.make(scene, 'e_' + id, a.w, a.h, a.frames || 4, a.k, a.fn);
+     else if (a.fn === humanoid || a.fn === drawGolem) {
+--- before/js/scenes.js
++++ after/js/scenes.js
+@@ -109,60 +109,62 @@
+   create() {
+     const W = CONFIG.width, H = CONFIG.height;
+     this.cameras.main.fadeIn(250);
+     menuBackdrop(this);
+     this.add.image(W / 2, H / 2, 'vignette').setDepth(1);
+-    mkText(this, W / 2, 56, 'ESCOLHA SEU HERÓI', 40, '#e6d6a8', { strokeThickness: 6 }).setOrigin(0.5).setDepth(10);
++    mkText(this, W / 2, 92, 'ESCOLHA SEU HERÓI', 30, '#e6d6a8', { strokeThickness: 5 }).setOrigin(0.5).setDepth(10);
+ 
+     this.ids = Object.keys(CHARACTERS);
+     this.sel = Math.max(0, this.ids.indexOf(this.registry.get('lastChar') || ''));
+     this.cards = [];
+-    const cy = 385, CW = 360, CH = 520;
++    const cy = 385, CW = 284, CH = 520, gap = 26;
+ 
+     this.ids.forEach((id, i) => {
+-      const c = CHARACTERS[id], x = 240 + i * 400;
++      const c = CHARACTERS[id], x = W / 2 + (i - (this.ids.length - 1) / 2) * (CW + gap);
+       const o = [];
+       const panel = this.add.rectangle(x, cy, CW, CH, 0x15111d, 0.94).setStrokeStyle(4, 0x4a3c5c).setDepth(5).setInteractive({ useHandCursor: true });
+       o.push(panel);
+       const glow = this.add.image(x, cy - 170, 'glow').setTint(c.color).setBlendMode(Phaser.BlendModes.ADD).setScale(2.2).setAlpha(0.35).setDepth(5);
+       const spr = this.add.sprite(x, cy - 170, 'c_' + id, 0).setScale(3).setDepth(6);
+       spr.play('walk_' + id);
+       o.push(glow, spr);
+-      o.push(mkText(this, x, cy - 76, c.name.toUpperCase(), 28, '#ffffff').setOrigin(0.5).setDepth(6));
+-      o.push(mkText(this, x, cy - 46, c.title, 14, '#e0b040').setOrigin(0.5).setDepth(6));
+-      o.push(mkText(this, x, cy - 24, c.desc, 15, '#bdb8cc', { wordWrap: { width: 316 }, align: 'center', strokeThickness: 2 }).setOrigin(0.5, 0).setDepth(6));
++      o.push(mkText(this, x, cy - 76, c.name.toUpperCase(), 25, '#ffffff').setOrigin(0.5).setDepth(6));
++      o.push(mkText(this, x, cy - 46, c.title, 12, '#e0b040').setOrigin(0.5).setDepth(6));
++      o.push(mkText(this, x, cy - 24, c.desc, 14, '#bdb8cc', { wordWrap: { width: 244 }, align: 'center', strokeThickness: 2 }).setOrigin(0.5, 0).setDepth(6));
++      o.push(mkText(this, x, cy + 72, `${c.hp} HP · ${c.speed} velocidade`, 13, '#d5e4e8', {strokeThickness:2}).setOrigin(0.5).setDepth(6));
+       // poder inicial
+       const pw = POWERS[c.startPower];
+-      o.push(this.add.rectangle(x, cy + 112, 316, 54, 0x0e0b14, 1).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
+-      o.push(this.add.image(x - 130, cy + 112, 'i_' + pw.icon).setScale(0.85).setDepth(7));
+-      o.push(mkText(this, x - 98, cy + 98, 'Poder inicial', 12, '#8a7fa0', { strokeThickness: 2 }).setDepth(7));
+-      o.push(mkText(this, x - 98, cy + 114, pw.name, 18, '#ffe9a8', { strokeThickness: 3 }).setDepth(7));
++      o.push(this.add.rectangle(x, cy + 112, 252, 54, 0x0e0b14, 1).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
++      o.push(this.add.image(x - 104, cy + 112, 'i_' + pw.icon).setScale(0.72).setDepth(7));
++      o.push(mkText(this, x - 78, cy + 98, 'Poder inicial', 11, '#8a7fa0', { strokeThickness: 2 }).setDepth(7));
++      o.push(mkText(this, x - 78, cy + 114, pw.name, 16, '#ffe9a8', { strokeThickness: 3 }).setDepth(7));
+       // atributos
+       let k = 0;
+       for (const label in c.stats) {
+         const yy = cy + 170 + k * 26;
+-        o.push(mkText(this, x - 150, yy - 8, label, 14, '#cfc8dc', { strokeThickness: 2 }).setDepth(6));
+-        o.push(this.add.rectangle(x + 50, yy, 190, 12, 0x0a0810).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
++        o.push(mkText(this, x - 122, yy - 8, label, 13, '#cfc8dc', { strokeThickness: 2 }).setDepth(6));
++        o.push(this.add.rectangle(x + 62, yy, 120, 12, 0x0a0810).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
+         const v = c.stats[label];
+-        o.push(this.add.rectangle(x - 45, yy, 186 * v, 8, c.color).setOrigin(0, 0.5).setDepth(7));
++        o.push(this.add.rectangle(x + 4, yy, 116 * v, 8, c.color).setOrigin(0, 0.5).setDepth(7));
+         k++;
+       }
+       panel.on('pointerover', () => this.select(i));
+       panel.on('pointerdown', () => { this.select(i); this.confirm(); });
+       this.cards.push({ panel, glow, spr, objs: o });
+     });
+ 
+-    mkText(this, W / 2, 678, '← →  escolher     ENTER  jogar     1 · 2 · 3  atalhos     ESC  voltar', 17, '#a89cc0').setOrigin(0.5).setDepth(10);
++    mkText(this, W / 2, 678, '← →  escolher     ENTER  jogar     1 · 2 · 3 · 4  atalhos     ESC  voltar', 17, '#a89cc0').setOrigin(0.5).setDepth(10);
+ 
+     const K = this.input.keyboard;
+-    K.on('keydown-LEFT', () => this.select((this.sel + 2) % 3));
+-    K.on('keydown-A', () => this.select((this.sel + 2) % 3));
+-    K.on('keydown-RIGHT', () => this.select((this.sel + 1) % 3));
+-    K.on('keydown-D', () => this.select((this.sel + 1) % 3));
++    K.on('keydown-LEFT', () => this.select((this.sel + this.ids.length - 1) % this.ids.length));
++    K.on('keydown-A', () => this.select((this.sel + this.ids.length - 1) % this.ids.length));
++    K.on('keydown-RIGHT', () => this.select((this.sel + 1) % this.ids.length));
++    K.on('keydown-D', () => this.select((this.sel + 1) % this.ids.length));
+     K.on('keydown-ONE', () => { this.select(0); this.confirm(); });
+     K.on('keydown-TWO', () => { this.select(1); this.confirm(); });
+     K.on('keydown-THREE', () => { this.select(2); this.confirm(); });
++    K.on('keydown-FOUR', () => { this.select(3); this.confirm(); });
+     K.on('keydown-ENTER', () => this.confirm());
+     K.on('keydown-SPACE', () => this.confirm());
+     K.on('keydown-ESC', () => this.back());
+     this.going = false;
+     this.select(this.sel, true);
+--- before/js/config.js
++++ after/js/config.js
+@@ -8,11 +8,11 @@
+   intro: {
+     welcome: 'Bem-vindo ao trabalho de',
+     author: 'Kaike Oliveira Cabral Araújo',
+     school: 'Aluno do Colégio Estadual Barbosa Ferraz',
+     course: 'Curso: 2º DS',
+-    description: 'Três guerreiros precisam atravessar a Floresta dos Esquecidos para chegar ao castelo. Siga os lampiões, sobreviva às criaturas da noite e enfrente os guardiões do caminho até o Cavaleiro Sombrio.',
++    description: 'Quatro heróis precisam atravessar a Floresta dos Esquecidos para chegar ao castelo. Siga os lampiões, sobreviva às criaturas da noite e enfrente os guardiões do caminho até o Cavaleiro Sombrio.',
+     wish: 'Desejo a você uma ótima experiência de jogo!',
+     okAfterMs: 5200,    // quando o botão OK aparece
+     autoMs: 15000,      // segue sozinho depois desse tempo
+     slideMs: 2600,      // duração da subida que revela o menu
+   },
+--- before/LEIA-ME.txt
++++ after/LEIA-ME.txt
+@@ -8,10 +8,14 @@
+ 
+ Ao abrir: tela de abertura (logo, nome, colégio, curso e descrição). O botão OK aparece depois de ~5 s
+ (ou ENTER/clique). Se ninguém clicar, segue sozinha em 15 s e sobe devagar mostrando o menu.
+ 
+ Controles: WASD ou setas para mover (os ataques são automáticos), P pausa, M liga/desliga o som, F tela cheia.
++Seleção: clique/toque no cartão, setas ou A/D para escolher, Enter para jogar e 1–4 como atalhos.
++Heróis: Vanguarda, Sombra Verde, Arcanista e Canalizador (110 HP, velocidade 165, Plasma inicial).
++A floresta tem 14 criaturas comuns, incluindo Bruxa da Névoa e Mago da Tempestade.
++Selos violetas e marcas ciano anunciam ataques no chão: saia da área antes da detonação.
+ 
+ Onde editar:
+   js/config.js      nome do jogo, textos e tempos da abertura, balanceamento, limites de desempenho, tempo do chefe
+   js/landscape.js   paisagem animada do menu (ciclo de dia, pôr do sol, noite, nascer do sol)
+   js/intro.js       tela de abertura
+@@ -26,11 +30,11 @@
+   ?hora=50&fixo   congela o fundo do menu num ponto do ciclo (0-84 s: dia 0-34, pôr do sol 44, noite 54-68, nascer 76)
+   ?boss=30        chefe aos 30 segundos
+   &god            invencível
+   &debug          mostra FPS e contagem de inimigos
+   &t=200          começa aos 200 segundos de partida
+-  &char=vanguard | ranger | mage   pula a abertura e a seleção de personagem
++  &char=vanguard | ranger | mage | channeler   pula a abertura e a seleção de personagem
+ 
+ CONTAS, RANKING E ADMINISTRADOR
+ - Inicie ./INICIAR-JOGO.sh e abra http://127.0.0.1:5501/.
+ - Entrar é opcional. Cadastre um nome de 3 a 20 caracteres e uma senha.
+ - O ranking registra pontos, abates e dano causado nas partidas normais.
+--- before/tests/new_creatures_checks.cjs
++++ after/tests/new_creatures_checks.cjs
+@@ -0,0 +1,60 @@
++// Real catalogs, director, AI and selection handlers run in an isolated VM.
++// Regressions caught: forest IDs leaking, warning coordinates following the player,
++// instant damage, missing stagger, fourth card offscreen or unreachable keyboard.
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++const assert = require('node:assert/strict');
++const ctx = vm.createContext({ console, Phaser: { Scene: class {}, BlendModes: { ADD: 1 } },
++  clamp: (v,a,b)=>Math.max(a,Math.min(b,v)), rand:(a,b)=>(a+b)/2,
++  angleDiff:(a,b)=>a-b, Sfx:{play(){}}, menuBackdrop(){} });
++for (const f of ['config','data','sprites','art','forest-enemies','enemies','scenes'])
++  vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/'+f+'.js'),'utf8'),ctx,{filename:f+'.js'});
++const run = code => vm.runInContext(code,ctx);
++const checks = [];
++function test(name, fn) { try { fn(); console.log('OK: '+name); } catch(e) { checks.push(name+': '+e.message); console.error('FAIL: '+name+': '+e.message); } }
++test('fourteen forest creatures enter its director and remain absent from castle',()=>{
++  assert.equal(run('FOREST_ENEMY_IDS.length'),14);
++  assert.equal(run(`['forest_witch','forest_storm_mage'].every(id=>FOREST_ENEMY_IDS.includes(id)&&ENEMIES[id].stage==='forest'&&ENEMY_ART[id].frames===4)`),true);
++  assert.equal(run(`new EnemyManager({add:{sprite:()=>({setVisible(){return this},setActive(){return this}})}}).ids.some(id=>id.startsWith('forest_'))`),false);
++  for(const id of ['forest_witch','forest_storm_mage']) {
++    assert.equal(run(`(()=>{const m=Object.create(EnemyManager.prototype);m.scene={difficulty:{id:'medium'}};m.ids=FOREST_ENEMY_IDS;m.counts={};m.weights=[];m.pickType(0);const before=m.weights[m.ids.indexOf('${id}')];m.pickType(500);return before===0&&m.weights[m.ids.indexOf('${id}')]>0})()`),true);
++    assert.equal(run(`FOREST_EVENTS.some(ev=>ev.enemy==='${id}'||ev.list?.['${id}'])`),true);
++  }
++});
++for (const [id, kind, delays] of [['forest_witch','dark',[1.5,1.5,1.5]],['forest_storm_mage','spark',[1.2,1.42,1.64]]]) {
++  test(id+' announces fixed positions, damage scaling, stagger and cooldown',()=>{
++    const result=run(`(()=>{
++      if(!ENEMIES['${id}']) return null;
++      const hazards=[],p={x:300,y:200};const sc={t:1,spawningEnabled:true,difficulty:{speedMul:1},fx:{burst(){}},addHazard:h=>hazards.push(h),world:{constrain(){}},grid:{query:()=>[]}};
++      const m=Object.create(EnemyManager.prototype);m.scene=sc;m.tmpS=[];
++      const e={def:ENEMIES['${id}'],x:0,y:200,state:'chase',atkCd:0,shellCd:0,contactCd:0,chargeCd:0,face:0,phase:0,strafe:1,kx:0,ky:0,slowUntil:0,sprite:{setFlipX(){}}};
++      m.ai(e,.01,p,2);p.x=600;p.y=500;m.ai(e,.01,p,2);
++      return {hazards,x:e.x,cd:e.shellCd};
++    })()`);
++    assert.ok(result,'creature exists');
++    assert.equal(result.hazards.length,3,'one bounded three-zone attack during cooldown');
++    assert.deepEqual(Array.from(result.hazards,h=>Number(h.delay.toFixed(2))),delays);
++    assert.equal(result.hazards[0].x,300,'target stays where it was announced');
++    assert.equal(result.hazards[0].y,200);
++    assert.ok(result.hazards.every(h=>h.kind===kind&&h.dmg>20&&h.delay>=1.2));
++    assert.ok(result.cd>3);
++  });
++}
++test('four cards fit and left/right, four shortcuts, pointer and lastChar reach every hero',()=>{
++  // Renderer boundary only: production SelectScene owns layout and input callbacks.
++  run(`globalThis.objects=[];globalThis.handlers={};globalThis.saved={lastChar:'channeler'};
++    function object(x,y,w,h,text){const o={x,y,width:w,height:h,text,handlers:{}};for(const key of ['setOrigin','setDepth','setTint','setBlendMode','setScale','setAlpha','setStrokeStyle','setInteractive','play'])o[key]=()=>o;o.on=(name,cb)=>{o.handlers[name]=cb;return o};objects.push(o);return o}
++    globalThis.selectScene=new SelectScene();selectScene.cameras={main:{fadeIn(){},fadeOut(){},once(){}}};
++    selectScene.registry={get:k=>saved[k],set:(k,v)=>saved[k]=v};selectScene.add={image:(x,y)=>object(x,y),sprite:(x,y)=>object(x,y),rectangle:(x,y,w,h)=>object(x,y,w,h),text:(x,y,text)=>object(x,y,0,0,text)};
++    selectScene.input={keyboard:{on:(key,cb)=>handlers[key]=cb}};menuBackdrop=()=>{};selectScene.create();`);
++  assert.equal(run('selectScene.cards.length'),4);
++  assert.equal(run('selectScene.ids[selectScene.sel]'),'channeler');
++  const panels=run('selectScene.cards.map(c=>({x:c.panel.x,w:c.panel.width}))');
++  for(let i=0;i<4;i++){assert.ok(panels[i].x-panels[i].w/2>=20);assert.ok(panels[i].x+panels[i].w/2<=1260);if(i)assert.ok(panels[i].x-panels[i].w/2>panels[i-1].x+panels[i-1].w/2);}
++  run(`handlers['keydown-RIGHT']()`);assert.equal(run('selectScene.sel'),0);
++  run(`handlers['keydown-LEFT']()`);assert.equal(run('selectScene.sel'),3);
++  for(const [i,key] of ['ONE','TWO','THREE','FOUR'].entries()) {run(`selectScene.going=false;handlers['keydown-${key}']()`);assert.equal(run('saved.lastChar'),['vanguard','ranger','mage','channeler'][i]);}
++  for(let i=0;i<4;i++){run(`selectScene.going=false;selectScene.cards[${i}].panel.handlers.pointerdown()`);assert.equal(run('selectScene.sel'),i);}
++});
++if(checks.length) { console.error(checks.length+' failing checks');process.exitCode=1; }

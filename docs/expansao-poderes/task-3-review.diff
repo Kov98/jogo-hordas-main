@@ -1,0 +1,725 @@
+--- before/js/game.js
++++ after/js/game.js
+@@ -20,11 +20,20 @@
+   async create() {
+     this.gameReady = false;
+     this.player = null;
+     const initialization = Symbol('partida');
+     this.initialization = initialization;
+-    this.events.once('shutdown', () => { if (this.initialization === initialization) this.initialization = null; });
++    this.cinematic = null;
++    this.cinematicWaits = new Set();
++    this.events.once('shutdown', () => {
++      if (this.initialization !== initialization) return;
++      this.initialization = null;
++      for (const cancel of [...this.cinematicWaits]) cancel();
++      this.cinematicWaits.clear();
++      this.cinematic = null;
++      this.scene.stop('FinaleOverlay');
++    });
+     const q = new URLSearchParams(location.search);
+     await GamePortal.ready;
+     if (this.initialization !== initialization) return;
+     if (!this.carry && this.stageId === 'castle' && !GamePortal.canPlayStage('castle') && (GamePortal.user || !q.has('stage'))) {
+       GamePortal.notice('Conclua a floresta e atravesse o portão para liberar o castelo.');
+@@ -75,10 +84,12 @@
+     this.stageSpawnMul = this.carry ? 1.15 : this.checkpoint?.stageSpawnMul || 1;
+     this.stageDamageMul = this.carry ? 1.2 : this.checkpoint?.stageDamageMul || 1;
+     this.saveError = this.carry?.saveError || null;
+     this.stageCleared = false;
+     this.transitioning = false;
++    this.cinematic = null;
++    this.forestVictory = null;
+     this.runSubmission = null;
+     this.ended = false;
+     this.levelUpOpen = false;
+     this.chestOpen = false;
+     this.pendingLevels = this.carry?.pendingLevels || this.checkpoint?.pendingLevels || 0;
+@@ -136,10 +147,11 @@
+     // Controles
+     this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SHIFT,SPACE,E,ENTER');
+     this.joy = { active: false, ox: 0, oy: 0, x: 0, y: 0 };
+     this.joyG = this.add.graphics().setScrollFactor(0).setDepth(99999);
+     this.input.on('pointerdown', (p) => {
++      if (this.cinematic) return;
+       if (!p.wasTouch || p.x > CONFIG.width - 145 && p.y > CONFIG.height - 240) return;
+       this.joy.active = true; this.joy.id = p.id; this.joy.ox = p.x; this.joy.oy = p.y; this.joy.x = 0; this.joy.y = 0;
+     });
+     this.input.on('pointermove', (p) => {
+       if (!this.joy.active || this.joy.id !== p.id || !p.isDown) return;
+@@ -155,25 +167,115 @@
+     this.time.delayedCall(900, () => this.announce('Fase ' + this.stage.number + ' — ' + this.stage.shortName, this.stage.color));
+   }
+ 
+   playCastleArrival() {
+     const entry = this.world.entry;
+-    if (!entry) return Promise.resolve();
++    if (!entry) return Promise.resolve(true);
++    const initialization = this.initialization;
++    this.setCinematic('castle-arrival', 'ALÉM DA MURALHA.');
+     const p = this.player;
+     p.x = entry.x; p.y = entry.startY;
+     p.sprite.setPosition(p.x, p.y).setDepth(p.y + 20);
+     p.shadow.setPosition(p.x, p.y + 20);
+     p.sprite.anims.resume();
+     this.cameras.main.centerOn(p.x, p.y);
++    this.cameras.main.fadeIn(650, 0, 0, 0);
++    return this.cinematicTween({ targets: p, y: entry.endY, duration: 1250, ease: 'Sine.easeOut',
++      onUpdate: () => this.syncCinematicPlayer(),
++    }).then(ok => {
++      if (!ok || !this.cinematicValid(initialization)) return false;
++      p.sprite.anims.pause(); p.invuln = 2;
++      this.setCinematic(null);
++      return true;
++    });
++  }
++
++  cinematicValid(initialization) {
++    return !!initialization && this.initialization === initialization && this.scene.isActive() && !this.ended;
++  }
++
++  clearCinematicInput() {
++    this.requestDash = false; this.botInput = null;
++    if (this.joy) { this.joy.active = false; this.joy.x = 0; this.joy.y = 0; }
++    this.joyG?.clear();
++    this.input.keyboard.resetKeys();
++    if (this.player) { this.player.dashT = 0; this.player.moving = false; }
++  }
++
++  setCinematic(state, caption) {
++    this.cinematic = state;
++    this.clearCinematicInput();
++    this.scene.get('UI')?.scene.setVisible(!state);
++    if (!state) { this.scene.stop('FinaleOverlay'); return; }
++    if (!this.scene.isActive('FinaleOverlay')) this.scene.launch('FinaleOverlay', { caption });
++    else this.scene.get('FinaleOverlay').caption?.setText(caption || '');
++    this.player.sprite.anims.pause();
++    this.player.sprite.setAlpha(1).clearTint();
++  }
++
++  // Every animation settles on shutdown, so old async sequences cannot resume a new run.
++  cinematicTween(config) {
++    const initialization = this.initialization;
+     return new Promise(resolve => {
+-      const done = () => { this.events.off('shutdown', done); resolve(); };
+-      this.events.once('shutdown', done);
+-      this.tweens.add({ targets: p, y: entry.endY, duration: 1250, ease: 'Sine.easeOut',
+-        onUpdate: () => { p.sprite.setPosition(p.x, p.y).setDepth(p.y + 20); p.shadow.setPosition(p.x, p.y + 20); },
+-        onComplete: () => { p.sprite.anims.pause(); p.invuln = 2; done(); },
+-      });
++      let tween, settled = false;
++      const finish = ok => {
++        if (settled) return;
++        settled = true;
++        this.cinematicWaits.delete(cancel);
++        if (!ok) { tween?.stop(); tween?.remove(); }
++        resolve(ok && this.cinematicValid(initialization));
++      };
++      const cancel = () => finish(false);
++      this.cinematicWaits.add(cancel);
++      tween = this.tweens.add({ ...config, onComplete: () => finish(true) });
+     });
++  }
++
++  cinematicDelay(duration) {
++    return this.cinematicTween({ targets: { progress: 0 }, progress: 1, duration });
++  }
++
++  syncCinematicPlayer() {
++    const p = this.player;
++    p.sprite.setPosition(p.x, p.y).setDepth(p.y + 20);
++    p.shadow.setPosition(p.x, p.y + 20).setDepth(p.y - 1);
++  }
++
++  beginForestVictory() {
++    if (this.forestVictory || this.stageId !== 'forest' || this.ended || this.stageCleared) return this.forestVictory;
++    this.setCinematic('forest-defeat', 'O CORAÇÃO SILENCIA.');
++    this.spawningEnabled = false;
++    this.enemyShots.clear(); this.hazards.length = 0; this.fx.ground.length = 0;
++    const initialization = this.initialization;
++    this.forestVictory = this.playForestVictory(initialization);
++    return this.forestVictory;
++  }
++
++  async playForestVictory(initialization) {
++    const cam = this.cameras.main, p = this.player, gate = this.world.gate;
++    cam.stopFollow();
++    cam.pan(this.boss?.x || p.x, this.boss?.y || p.y, 700, 'Sine.easeInOut');
++    if (!await this.cinematicDelay(2700) || !this.cinematicValid(initialization)) return false;
++    this.setCinematic('forest-roots', 'AS RAÍZES CEDERAM.');
++    for (const tween of this.world.barrierTweens) { tween.stop(); tween.remove(); }
++    if (this.world.barrierProps.length) {
++      if (!await this.cinematicTween({ targets: this.world.barrierProps, scaleY: 0.12, alpha: 0, duration: 650, ease: 'Sine.easeIn' }) || !this.cinematicValid(initialization)) return false;
++    }
++    this.world.hideBarrier();
++    this.setCinematic('forest-gate', 'O CAMINHO ESTÁ ABERTO.');
++    cam.pan(gate.x, gate.y - 95, 1150, 'Sine.easeInOut'); cam.zoomTo(1, 1150);
++    if (!await this.cinematicDelay(1200) || !this.cinematicValid(initialization)) return false;
++    if (!await this.world.animateCastleGate() || !this.cinematicValid(initialization)) return false;
++    this.setCinematic('forest-return', 'SIGA OS LAMPIÕES ATÉ O CASTELO.');
++    cam.pan(p.x, p.y, 1100, 'Sine.easeInOut');
++    if (!await this.cinematicDelay(1150) || !this.cinematicValid(initialization)) return false;
++    cam.startFollow(p.sprite, true, 0.12, 0.12);
++    this.stageCleared = true;
++    this.setCinematic(null);
++    this.announce('O portão foi aberto! Siga os lampiões ao norte.', 0xffdc9c);
++    Sfx.play('levelup');
++    return true;
+   }
+ 
+   // ---------------------------------------------------------- utilidades usadas por poderes/inimigos
+   announce(msg, color) {
+     const ui = this.scene.get('UI');
+@@ -190,11 +292,11 @@
+     out.length = n;
+     return out;
+   }
+ 
+   damageEnemy(e, dmg, src) {
+-    if (!e.alive || dmg <= 0) return;
++    if (this.cinematic || !e.alive || dmg <= 0) return;
+     if (e.isBoss) {
+       const before = e.hp;
+       if (e.hurt(dmg)) {
+         this.totalDamage += Math.max(0, before - e.hp);
+         this.fx.number(e.x + rand(-30, 30), e.y - 64, Math.round(dmg), '#ffe9a0', false);
+@@ -258,11 +360,11 @@
+       }
+     }
+   }
+ 
+   // ---------------------------------------------------------- níveis
+-  queueLevelUp() { this.pendingLevels++; }
++  queueLevelUp() { if (!this.cinematic) this.pendingLevels++; }
+ 
+   rollChoices() {
+     const p = this.player, pool = [];
+     for (const pw of p.powers) if (!pw.maxed) pool.push({ key: 'u:' + pw.def.id, type: 'upgrade', id: pw.def.id, w: 2.2 });
+     if (p.powers.length < CONFIG.maxPowers) {
+@@ -289,11 +391,11 @@
+     this.lastOffer = out.map((c) => c.key);
+     return out;
+   }
+ 
+   openLevelUp() {
+-    if (this.levelUpOpen || this.chestOpen || this.ended) return;
++    if (this.cinematic || this.levelUpOpen || this.chestOpen || this.ended) return;
+     const ui = this.scene.get('UI');
+     if (!ui || !ui.ready) return;
+     this.pendingLevels--;
+     this.levelUpOpen = true;
+     const choices = this.rollChoices();
+@@ -306,11 +408,11 @@
+     });
+   }
+ 
+   openEvolutionChest(chest) {
+     const ui = this.scene.get('UI');
+-    if (this.ended || this.levelUpOpen || this.chestOpen || !ui?.ready) return false;
++    if (this.cinematic || this.ended || this.levelUpOpen || this.chestOpen || !ui?.ready) return false;
+     const offers = this.progression.getOffers(chest.canEvolve !== false);
+     if (!offers.length) return false;
+     this.chestOpen = true;
+     this.scene.pause();
+     Sfx.play('levelup');
+@@ -321,10 +423,11 @@
+     }, { chest: true });
+     return true;
+   }
+ 
+   applyChoice(c) {
++    if (this.cinematic) return;
+     const p = this.player;
+     if (c.type === 'upgrade' || c.type === 'new') p.addPower(c.id);
+     else if (c.type === 'passive') p.addPassive(c.id);
+     else if (c.type === 'dash') p.upgradeDash();
+     else if (c.type === 'evolution') this.progression.applyRecipe(c.id);
+@@ -356,18 +459,11 @@
+   }
+ 
+   onBossDefeated() {
+     if (this.ended) return;
+     if (this.stage.next) {
+-      if (this.stageCleared) return;
+-      this.stageCleared = true;
+-      this.enemyShots.clear(); this.hazards.length = 0;
+-      this.gems.magnetAll();
+-      this.world.openCastleGate();
+-      this.cameras.main.zoomTo(1, 1000);
+-      this.announce('O portão foi aberto! Siga os lampiões ao norte.', 0xffdc9c);
+-      Sfx.play('levelup');
++      this.beginForestVictory();
+       return;
+     }
+     this.ended = true;
+     this.spawningEnabled = false;
+     this.enemyShots.clear(); this.hazards.length = 0; this.fx.ground.length = 0;
+@@ -386,35 +482,50 @@
+     return this.stageId === 'forest' && gate && (this.world.isAtCastleDoor ? this.world.isAtCastleDoor(this.player) : Math.hypot(this.player.x - gate.x, this.player.y - gate.y) <= 150);
+   }
+ 
+   async enterCastle() {
+     const ui = this.scene.get('UI');
+-    if (!this.gameReady || !this.scene.isActive() || this.ended || this.transitioning || !this.stageCleared || !this.world.gateOpen || !this.nearCastleGate() || this.levelUpOpen || this.chestOpen || ui?.paused || GamePortal.dialogOpen) return false;
++    if (this.cinematic || !this.gameReady || !this.scene.isActive() || this.ended || this.transitioning || !this.stageCleared || !this.world.gateOpen || !this.nearCastleGate() || this.levelUpOpen || this.chestOpen || ui?.paused || GamePortal.dialogOpen) return false;
+     this.transitioning = true;
+     const initialization = this.initialization;
++    this.setCinematic('castle-entry', 'ALÉM DA MURALHA.');
++    const p = this.player, gate = this.world.gate;
++    p.sprite.anims.resume();
++    if (!await this.cinematicTween({ targets: p, x: gate.x, y: Math.min(p.y, gate.y + 25), duration: 300, ease: 'Sine.easeInOut', onUpdate: () => this.syncCinematicPlayer() }) || !this.cinematicValid(initialization)) return false;
++    if (!await this.cinematicTween({ targets: p, y: gate.y - 75, duration: 600, ease: 'Linear', onUpdate: () => this.syncCinematicPlayer() }) || !this.cinematicValid(initialization)) return false;
++    p.sprite.anims.pause();
++    this.scene.get('FinaleOverlay').caption?.setAlpha(0);
++    this.cameras.main.fadeOut(350, 0, 0, 0);
++    if (!await this.cinematicDelay(380) || !this.cinematicValid(initialization)) return false;
++    const run = await this.runStart;
++    if (!this.cinematicValid(initialization)) return false;
+     const carry = {
+       player: capturePlayerState(this.player), elapsed: this.totalTime,
+       kills: this.totalKills, damage: this.totalDamage, pendingLevels: this.pendingLevels,
+       consumed: [...this.progression.consumed], completed: [...this.progression.completed],
+       startStageId: this.startStageId, practice: this.isPractice, godMode: this.godMode,
+-      saveError: this.saveError, run: await this.runStart,
++      saveError: this.saveError, run,
+     };
+     try {
+-      if (carry.run?.run_id && !carry.saveError) await GamePortal.advanceRun(carry.run.run_id);
++      if (carry.run?.run_id && !carry.saveError) {
++        await GamePortal.advanceRun(carry.run.run_id);
++        if (!this.cinematicValid(initialization)) return false;
++      }
+     } catch (error) {
++      if (!this.cinematicValid(initialization)) return false;
+       carry.practice = true;
+       carry.saveError = 'A passagem não foi registrada no servidor. Esta campanha segue fora do ranking.';
+       GamePortal.notice(carry.saveError);
+     }
+-    if (this.initialization !== initialization || this.ended) return false;
++    if (!this.cinematicValid(initialization)) return false;
+     if (!carry.run?.run_id && !carry.practice && !carry.saveError && !GamePortal.user) GamePortal.recordGuestAdvance();
+     this.scene.restart({ char: this.charId, difficulty: this.difficultyId, stage: 'castle', carry });
+     return true;
+   }
+ 
+   onPlayerDeath() {
+-    if (this.ended) return;
++    if (this.cinematic || this.ended) return;
+     this.ended = true;
+     const p = this.player;
+     p.sprite.anims.stop(); p.sprite.clearTint();
+     this.fx.burst('blood', p.x, p.y, 18);
+     this.tweens.add({ targets: p.sprite, angle: 90, alpha: 0.35, y: p.y + 8, duration: 700, ease: 'Quad.easeOut' });
+@@ -449,10 +560,11 @@
+     this.scene.pause();
+   }
+ 
+   // ---------------------------------------------------------- entrada
+   readInput() {
++    if (this.cinematic) return { x: 0, y: 0, dash: false, interact: false };
+     if (this.botInput) return this.botInput;
+     const K = this.keys;
+     let x = 0, y = 0;
+     if (K.A.isDown || K.LEFT.isDown) x -= 1;
+     if (K.D.isDown || K.RIGHT.isDown) x += 1;
+@@ -465,10 +577,16 @@
+     return { x, y, dash, interact };
+   }
+ 
+   // ---------------------------------------------------------- loop principal
+   update(time, delta) {
++    if (this.cinematic && this.world && this.fx) {
++      const dt = Math.max(0, delta / 1000);
++      this.visualTime += dt;
++      this.fx.update(dt); this.world.update(dt, this.visualTime);
++      return;
++    }
+     if (!this.gameReady || this.transitioning) return;
+     const dt = Math.min(delta / 1000, 0.05);
+     this.visualTime += dt;
+     this.drawJoystick();
+     if (this.ended) { this.fx.update(dt); this.world.update(dt, this.visualTime); this.finale?.update(Math.max(0, delta / 1000)); return; }
+@@ -481,14 +599,16 @@
+     this.grid.clear();
+     for (const e of this.enemies.pool) if (e.alive) this.grid.insert(e);
+     if (this.boss && this.boss.alive) this.grid.insert(this.boss);
+ 
+     this.player.update(dt, input, this.world);
++    if (this.cinematic) return;
+     this.enemies.update(dt);
+     this.encounters.update(dt);
+     if (this.boss) this.boss.update(dt);
+     this.pShots.update(dt);
++    if (this.cinematic) return;
+     this.enemyShots.update(dt);
+     this.gems.update(dt);
+     this.updateHazards(dt);
+     this.fx.update(dt);
+     this.world.update(dt, this.visualTime);
+--- before/js/boss.js
++++ after/js/boss.js
+@@ -174,10 +174,11 @@
+ 
+   die() {
+     if (!this.alive) return;
+     const sc = this.scene;
+     this.alive = false; this.state = 'dead';
++    if (sc.stageId === 'forest') sc.beginForestVictory();
+     sc.enemyShots.clear(); sc.hazards.length = 0; sc.fx.ground.length = 0;
+     this.sprite.anims.stop(); this.sprite.setFrame(0).clearTint();
+     this.aura.setAlpha(0);
+     sc.announce(this.data.name + ' derrotado!', 0xffe070);
+     let n = 0;
+--- before/js/forest.js
++++ after/js/forest.js
+@@ -248,10 +248,11 @@
+     const glow = this.light(x, y - 17, opt.scale || 1.9, opt.alpha || 0.48, 'forest_glow_warm');
+     this.light(x, y - 17, 0.38, 0.42, 'forest_glow_warm');
+     const spill = this.decal('forest_glow_warm', x + 4, opt.groundY === undefined ? y + 2 : opt.groundY, 1, 0.32)
+       .setScale(1.65, 0.5).setBlendMode(Phaser.BlendModes.ADD);
+     const lamp = { x, y, image, glow, spill, phase: this.rng() * Math.PI * 2 };
++    this.fireSources.push({ x, y: y - 17, rate: 3 });
+     this.lanterns.push(lamp); return lamp;
+   }
+ 
+   buildForestStories() {
+     for (let i = 0; i < this.storySites.length; i++) {
+@@ -283,11 +284,16 @@
+     const right = x + 288;
+     this.scene.add.tileSprite((right + this.W) / 2, y, this.W - right, 384, 'forest_rampart').setOrigin(0.5, 1).setDepth(y - 3);
+     this.scene.add.tileSprite(this.W / 2, y + 25, this.W, 52, 'forest_wall_shadow').setDepth(-6020).setAlpha(0.72);
+     this.decal('forest_shadow', x, y + 5, 3.8, 0.55).setScale(4.5, 0.8);
+     this.decal('forest_gate_approach', x, y + 59, 1, 0.92).setDepth(-9810);
+-    this.gateImage = this.prop('forest_gate_closed', x, y);
++    this.gateImage = this.prop('forest_gate_open', x, y);
++    this.gateLeaves = [
++      this.scene.add.image(x - 72, y - 18, 'forest_gate_leaf_left').setOrigin(0, 1),
++      this.scene.add.image(x + 72, y - 18, 'forest_gate_leaf_right').setOrigin(1, 1),
++    ];
++    for (const leaf of this.gateLeaves) leaf.setDepth(y + 0.5).setTint(0xb4b8bf);
+     this.forestLantern(x - 106, y - 57, { depth: y + 1, groundY: y + 8, scale: 2.1, alpha: 0.5 });
+     this.forestLantern(x + 106, y - 57, { depth: y + 1, groundY: y + 8, scale: 2.1, alpha: 0.5 });
+     this.light(x, y - 65, 1.1, 0.035, 'forest_glow_warm');
+     this.gateBeacon = this.lights[this.lights.length - 1];
+     this.gateSpill = this.decal('forest_glow_warm', x, y + 30, 1, 0.035).setScale(1.4, 0.65).setBlendMode(Phaser.BlendModes.ADD);
+@@ -343,19 +349,36 @@
+   openCastleGate() {
+     this.gateOpen = true;
+     this.arenaLock = false;
+     this.hideBarrier();
+     this.gateImage.setTexture('forest_gate_open');
++    for (const leaf of this.gateLeaves || []) leaf.setVisible(false);
+     this.gateBeacon.a = 0.37; this.gateBeacon.sc = 2;
+     this.gateSpill.setAlpha(0.3).setScale(1.8, 0.85);
+   }
+ 
+   isAtCastleDoor(entity) {
+     if (!entity) return false;
+     const radius = entity.radius || 12;
+     return Math.abs(entity.x - this.gate.x) <= 72 - radius &&
+       entity.y >= this.gate.y - 100 + radius && entity.y <= this.gate.y + 100;
++  }
++
++  animateCastleGate() {
++    if (this.gateOpening) return this.gateOpening;
++    if (this.gateOpen) return Promise.resolve(true);
++    const sc = this.scene, initialization = sc.initialization;
++    this.gateOpening = (async () => {
++      sc.cameras.main.shake(1000, 0.002);
++      sc.fx.burst('bone', this.gate.x, this.gate.y - 12, 20);
++      sc.fx.embers(this.gate.x, this.gate.y - 25, 16);
++      const ok = await sc.cinematicTween({ targets: this.gateLeaves, scaleX: 0.07, duration: 1400, ease: 'Sine.easeInOut' });
++      if (!ok || !sc.cinematicValid(initialization)) return false;
++      this.openCastleGate();
++      return true;
++    })();
++    return this.gateOpening;
+   }
+ 
+   constrain(e) {
+     super.constrain(e);
+     const radius = e.radius || 12, front = this.gate.y;
+--- before/js/forest-art.js
++++ after/js/forest-art.js
+@@ -351,10 +351,26 @@
+     ivy(7, 58, 83); ivy(245, 56, 89); ivy(62, 35, 43); ivy(191, 73, 56);
+     P.line(179, 55, 176, 61, '#1c3530'); P.line(176, 61, 180, 70, '#1c3530');
+   };
+   make('gate_closed', 256, 160, gate(false), 3);
+   make('gate_open', 256, 160, gate(true), 3);
++  // Separate hinges keep the stone facade motionless during opening.
++  for (const [side, offset] of [['left', 104], ['right', 128]]) {
++    make('gate_leaf_' + side, 24, 67, P => {
++      for (let x = 0; x < 24; x += 6) {
++        const source = offset + x, d = Math.abs(source + 3 - 128), top = (d < 6 ? 90 : d < 14 ? 95 : 103) - 87;
++        P.r(x, top, 6, 67 - top, '#51533f'); P.r(x, top, 1, 67 - top, '#8f8a60');
++        P.r(x + 5, top, 1, 67 - top, '#283e31'); P.r(x + 2, 33 + source % 7, 1, 14, '#354735');
++      }
++      for (const y of [28, 56]) {
++        P.r(0, y, 24, 4, '#283c39'); P.r(1, y, 22, 1, '#9ca38b');
++        for (let x = 3; x < 24; x += 8) P.p(x, y + 2, '#cfbc7d');
++      }
++      P.r(side === 'left' ? 23 : 0, 4, 1, 62, '#172f29');
++      P.r(side === 'left' ? 17 : 5, 41, 3, 5, '#b29c60');
++    }, 3);
++  }
+   make('castle_entry', 128, 112, P => {
+     const { stone, panel } = masonry(P, 6509);
+     P.shadow(64, 108, 124); panel(4, 20, 120, 87);
+     P.r(34, 48, 60, 57, '#0a1720'); P.r(40, 34, 48, 17, '#0a1720');
+     P.r(49, 25, 30, 12, '#0a1720'); P.r(58, 20, 12, 8, '#0a1720');
+--- before/js/finale.js
++++ after/js/finale.js
+@@ -1,12 +1,12 @@
+ // A sobreposição tem câmera própria: o zoom do mundo não desloca as barras.
+ class FinaleOverlayScene extends Phaser.Scene {
+   constructor() { super('FinaleOverlay'); }
+-  create() {
++  create(data = {}) {
+     this.add.rectangle(CONFIG.width / 2, 21, CONFIG.width, 42, 0x000000);
+     this.add.rectangle(CONFIG.width / 2, CONFIG.height - 21, CONFIG.width, 42, 0x000000);
+-    this.caption = mkText(this, CONFIG.width / 2, CONFIG.height - 66, 'O SILÊNCIO NÃO ERA O FIM.', 19, '#dec9a6').setOrigin(.5);
++    this.caption = mkText(this, CONFIG.width / 2, CONFIG.height - 66, data.caption || 'O SILÊNCIO NÃO ERA O FIM.', 19, '#dec9a6').setOrigin(.5);
+   }
+ }
+ 
+ // Desfecho do castelo: o mesmo círculo ritual se rompe sob os pés do herói.
+ class CastleFinale {
+--- before/js/ui.js
++++ after/js/ui.js
+@@ -32,11 +32,11 @@
+     this.txtEvent = mkText(this, W / 2, 85, '', 12, '#a296b3').setOrigin(0.5).setDepth(12);
+     this.txtDash = mkText(this, 20, H - 47, '', 14, '#c6dae8').setDepth(12);
+     this.miniTexts = [0, 1].map(i => mkText(this, W / 2, 566 + i * 44, '', 15, '#d7b6ed').setOrigin(0.5).setDepth(12).setVisible(false));
+     if (this.sys.game.device.input.touch) {
+       this.dashButton = this.add.circle(W - 76, H - 170, 42, 0x21172f, 0.85).setStrokeStyle(3, 0xafa0d0).setDepth(30).setInteractive();
+-      this.dashButton.on('pointerdown', (pointer, x, y, event) => { if (!this.paused && !this.lvlActive && !this.G.ended) this.G.requestDash = true; event.stopPropagation(); });
++      this.dashButton.on('pointerdown', (pointer, x, y, event) => { if (!this.G.cinematic && !this.paused && !this.lvlActive && !this.G.ended) this.G.requestDash = true; event.stopPropagation(); });
+       mkText(this, W - 76, H - 170, 'DASH', 17, '#ddd2ef').setOrigin(0.5).setDepth(31);
+     }
+     this.txtDbg = this.G.debug ? mkText(this, W - 16, 130, '', 13, '#9aff9a').setOrigin(1, 0).setDepth(12) : null;
+ 
+     // casas de poderes (linha 1) e melhorias de atributos (linha 2)
+@@ -126,11 +126,11 @@
+     for (let i = 0; i < p.powers.length; i++) { const x = 16 + i * 54; g.fillStyle(0x0e0b14, 0.9); g.fillRect(x, 74, 48, 48); g.lineStyle(2, p.powers[i].maxed ? 0xffd070 : 0x4a3c5c, 1); g.strokeRect(x, 74, 48, 48); }
+     const pk = Object.keys(p.passives);
+     for (let i = 0; i < pk.length; i++) { const x = 16 + i * 40; g.fillStyle(0x0e0b14, 0.9); g.fillRect(x, 128, 36, 36); g.lineStyle(2, 0x3a5a44, 1); g.strokeRect(x, 128, 36, 36); }
+ 
+     const nearGate = !!G.nearCastleGate();
+-    const gateUi = nearGate && !this.lvlActive && !this.paused && !G.ended;
++    const gateUi = nearGate && !G.cinematic && !this.lvlActive && !this.paused && !G.ended;
+     this.txtGate.setVisible(gateUi);
+     if (gateUi) this.setText(this.txtGate, G.transitioning ? 'Entrando no castelo…' : G.stageCleared ? 'Passagem liberada • E / ENTER ou toque' : 'Portão selado • derrote o guardião da floresta');
+     const canEnter = gateUi && G.stageCleared && !G.transitioning;
+     this.gateButton.objs.forEach(o => o.setVisible(canEnter));
+ 
+@@ -226,11 +226,11 @@
+       O.push(...card);
+     });
+   }
+ 
+   choose(i) {
+-    if (GamePortal.dialogOpen || !this.lvlActive || this.time.now - this.lvlOpenAt < 350) return;   // evita clique acidental
++    if (this.G.cinematic || GamePortal.dialogOpen || !this.lvlActive || this.time.now - this.lvlOpenAt < 350) return;   // evita clique acidental
+     const c = this.lvlChoices[i];
+     if (!c) return;
+     this.lvlActive = false;
+     Sfx.play('ui');
+     for (const o of this.lvlObjs) o.destroy();
+@@ -240,11 +240,11 @@
+   }
+ 
+   // ---------------------------------------------------------- pausa
+   togglePause() {
+     const G = this.G;
+-    if (GamePortal.dialogOpen || G.transitioning || G.ended || this.lvlActive || !G.player) return;
++    if (G.cinematic || GamePortal.dialogOpen || G.transitioning || G.ended || this.lvlActive || !G.player) return;
+     const W = CONFIG.width, H = CONFIG.height, O = this.pauseObjs;
+     if (!this.paused) {
+       this.paused = true;
+       G.scene.pause();
+       O.push(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.72).setDepth(100));
+--- before/js/portal.js
++++ after/js/portal.js
+@@ -41,11 +41,11 @@
+     try { return !!game()?.scene?.isActive(key); } catch (_) { return false; }
+   };
+   const paused = (key) => {
+     try { return !!game()?.scene?.isPaused(key); } catch (_) { return false; }
+   };
+-  const cinematicActive = () => (active('Game') || paused('Game')) && !!scene('Game')?.finale && !active('End');
++  const cinematicActive = () => (active('Game') || paused('Game')) && !!(scene('Game')?.cinematic || scene('Game')?.finale) && !active('End');
+ 
+   function updateToolbar() {
+     if (!toolbar) return;
+     const mode = active('End') ? 'end' : (active('Game') || paused('Game')) ? 'game'
+       : ['Menu', 'Select', 'StageSelect', 'Difficulty'].some(active) ? 'menu' : '';
+@@ -220,10 +220,11 @@
+       if (running === saved.pausedScene && paused('Game') && !active('End') && !running.ended && !running.levelUpOpen && !ui?.paused && !ui?.lvlActive) game().scene.resume('Game');
+     }
+   }
+ 
+   function openDialog(title) {
++    if (cinematicActive()) return null;
+     if (!initialized) initDOM();
+     const previousFocus = document.activeElement;
+     const overlay = element('div', 'portal-overlay');
+     const panel = element('section', 'portal-dialog');
+     const header = element('header', 'portal-dialog-header');
+@@ -356,10 +357,11 @@
+     actions.append(button('Alterar senha', () => showPassword(dialog)), logout);
+     dialog.body.append(actions);
+   }
+ 
+   function openLogin() {
++    if (cinematicActive()) return;
+     const dialog = openDialog(portal.user ? 'Minha conta' : 'Entre na muralha');
+     if (portal.user) { showAccount(dialog); return dialog; }
+     if (!online) refreshSession().then(() => { if (portal.user && dialog.panel.isConnected) showAccount(dialog); }).catch(() => {});
+     dialog.body.append(element('p', 'portal-muted', 'Entrar é opcional. Crie uma conta para registrar suas melhores partidas ou continue como convidado.'));
+     const switches = element('div', 'portal-switches');
+@@ -410,10 +412,11 @@
+     return dialog;
+   }
+ 
+   const number = (value) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Number(value) || 0);
+   function openLeaderboard() {
++    if (cinematicActive()) return;
+     const dialog = openDialog('Ranking da muralha');
+     dialog.panel.classList.add('portal-dialog-wide');
+     dialog.body.append(element('p', 'portal-muted', 'Melhor partida de cada conta. Administradores e contas suspensas ficam fora da classificação.'));
+     const switches = element('div', 'portal-switches');
+     switches.setAttribute('aria-label', 'Ordenar ranking');
+@@ -480,10 +483,11 @@
+     load('points');
+     return dialog;
+   }
+ 
+   function openAdmin() {
++    if (cinematicActive()) return;
+     if (!portal.isAdmin) return;
+     if (window.GameAdmin?.open) window.GameAdmin.open();
+     else portal.notice('O painel de administração ainda não está disponível.');
+   }
+ 
+--- before/js/player.js
++++ after/js/player.js
+@@ -123,10 +123,11 @@
+ 
+     for (const p of this.powers) p.update(dt);
+   }
+ 
+   takeDamage(n) {
++    if (this.scene.cinematic) return false;
+     if (this.dead || this.invuln > 0 || (this.dashSmoke && this.dashT > 0)) return false;
+     if (this.scene.godMode) return false;
+     this.hp -= n;
+     this.invuln = CONFIG.player.invuln;
+     this.flash = 0.12;
+@@ -142,10 +143,11 @@
+     this.hp = Math.min(this.maxHp, this.hp + n);
+     this.scene.fx.number(this.x, this.y - 30, '+' + Math.round(n), '#7aff9a', false);
+   }
+ 
+   gainXp(n) {
++    if (this.scene.cinematic) return;
+     if (this.level >= 100) return;
+     this.xp += n;
+     while (this.level < 100 && this.xp >= this.xpNext) {
+       this.xp -= this.xpNext;
+       this.level++;
+--- before/js/guide.js
++++ after/js/guide.js
+@@ -3,10 +3,11 @@
+   open() {
+     const game = window.GAME?.scene.getScene('Game');
+     const live = game?.gameReady && !game.ended && (game.scene.isActive() || game.scene.isPaused());
+     const p = live ? game.player : null;
+     const dialog = GamePortal.openDialog('Grimório da muralha');
++    if (!dialog) return;
+     dialog.panel.classList.add('portal-dialog-wide');
+     const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+     dialog.body.append(el('p', 'portal-muted', 'Leve uma arma ao nível 8 e obtenha o atributo indicado. A partir dos 5 minutos, abra um baú para escolher uma evolução. Uniões transformam duas armas no máximo em uma e liberam um espaço. Os atributos são preservados.'));
+     dialog.body.append(el('p', 'portal-muted', 'Dash: SHIFT ou ESPAÇO. Melhore até o nível 3, obtenha Passos Leves e use um baú para aprender o Passo de Fumaça. A imunidade dura apenas o dash.'));
+     const list = el('div', 'guide-recipes');
+--- before/js/admin.js
++++ after/js/admin.js
+@@ -57,10 +57,11 @@
+     return 'Comando aplicado. Partida de treino.';
+   },
+   open() {
+     if (!GamePortal.isAdmin) return GamePortal.notice('Acesso exclusivo do administrador.');
+     const dialog = GamePortal.openDialog('Administração');
++    if (!dialog) return;
+     const node = (tag, text, className) => { const el = document.createElement(tag); if (text) el.textContent = text; if (className) el.className = className; return el; };
+     const nav = node('div', '', 'admin-tabs'), content = node('div', '', 'admin-content');
+     const status = node('p', '', 'admin-status'); status.setAttribute('role', 'status');
+     dialog.body.append(nav, content, status);
+     const button = (label, fn, parent = content) => { const b = node('button', label); b.type = 'button'; b.addEventListener('click', fn); parent.append(b); return b; };
+--- before/tests/forest_cinema_checks.cjs
++++ after/tests/forest_cinema_checks.cjs
+@@ -0,0 +1,64 @@
++﻿const assert = require('node:assert/strict');
++if (process.argv.includes('--unit')) {
++ const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
++ const game = { cinematic: 'forest-defeat', gameReady: true, ended: false, player: {}, scene: { isActive: () => true, isPaused: () => false } };
++ const context = { location: { hostname: '127.0.0.1', port: '8765', origin: 'http://127.0.0.1:8765' }, localStorage: { getItem: () => null },
++  document: { body: null, addEventListener() {}, createElement() { throw Error('Blocked dialog reached the DOM'); } },
++  GAME: { scene: { getScene: () => game, isActive: key => key === 'Game', isPaused: () => false } } };
++ context.window = context;
++ vm.createContext(context);
++ for (const file of ['portal.js', 'guide.js', 'admin.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../js', file), 'utf8'), context, { filename: file });
++ context.GamePortal.user = { id: 1, role: 'admin', username: 'isolated-fixture' };
++ for (const state of ['forest-defeat', 'forest-roots', 'forest-gate', 'forest-return', 'castle-entry', 'castle-arrival']) {
++  game.cinematic = state;
++  assert.equal(context.GamePortal.openDialog('fixture'), null, state);
++  assert.doesNotThrow(() => context.PowerGuide.open(), state);
++  assert.doesNotThrow(() => context.GameAdmin.open(), state);
++  assert.equal(context.GamePortal.dialogOpen, false, state);
++ }
++ game.cinematic = null; game.finale = {};
++ assert.equal(context.GamePortal.openDialog('finale fixture'), null);
++ console.log('OK: direct dialogs, guide and admin blocked in all cinema states and CastleFinale');
++ process.exit(0);
++}
++const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
++const base = process.env.MURALHA_TEST_URL;
++if (!base) throw Error('Execute browser_accounts.py --forest-cinema');
++(async () => {
++ const browser = await chromium.launch({headless:true, executablePath:process.env.CHROME_PATH || '/usr/bin/google-chrome',args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding']});
++ const page = await browser.newPage({viewport:{width:1280,height:720}}), errors=[];
++ page.on('pageerror', e=>{errors.push(e.message);console.error('PAGE ERROR:',e.message);});
++ const ready = stage => page.waitForFunction(s=>window.GAME?.scene.getScene('Game')?.gameReady && GAME.scene.getScene('Game').stageId===s,stage,{timeout:60000});
++ const restart = async () => {await page.evaluate(()=>{const g=GAME.scene.getScene('Game');window.previousCinemaInitialization=g.initialization;g.scene.restart({char:'mage',stage:'forest'});});await page.waitForFunction(()=>GAME.scene.getScene('Game').initialization!==window.previousCinemaInitialization);await ready('forest');};
++ const kill = () => page.evaluate(()=>{const g=GAME.scene.getScene('Game');g.startBossFight();g.boss.invuln=false;g.damageEnemy(g.boss,g.boss.maxHp);return {cinematic:g.cinematic,cleared:g.stageCleared,t:g.t,points:g.points};});
++ try {
++  await page.goto(base+'/?char=mage&god&nointro');await ready('forest');
++  const fatal=await kill(); assert.ok(fatal.cinematic,'fatal hit must synchronously lock cinema');assert.equal(fatal.cleared,false);
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game'),p=g.player,hp=p.hp,xp=p.xp,t=g.t,visual=g.visualTime;g.godMode=false;p.invuln=0;p.takeDamage(10000);p.gainXp(100000);g.update(0,1000);g.openLevelUp();return p.hp===hp&&p.xp===xp&&!p.dead&&!g.levelUpOpen&&g.t===t&&g.visualTime>=visual+1;}),'cinema blocks direct damage/XP and animates environment with uncapped frame delta');
++  assert.equal(await page.evaluate(()=>{const d=GamePortal.openDialog('cinema fixture');const opened=GamePortal.dialogOpen;d?.close();return opened;}),false,'dialog API must reject cinema');
++  await page.keyboard.press('Escape');await page.keyboard.press('g');await page.keyboard.press('F2');await page.keyboard.press('Space');
++  await page.waitForTimeout(600);
++  assert.deepEqual(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return {t:g.t,points:g.points,paused:GAME.scene.isPaused('Game'),dialog:GamePortal.dialogOpen,dash:g.requestDash};}),{t:fatal.t,points:fatal.points,paused:false,dialog:false,dash:false});
++  await page.waitForFunction(()=>GAME.scene.getScene('Game').stageCleared,null,{timeout:12000});
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return !g.cinematic && g.world.gateOpen && !g.ended && GAME.scene.isVisible('UI');}));
++  console.log('OK: fatal freeze, shortcut blocking, gate cinema and restored controls');
++  await page.evaluate(()=>{const g=GAME.scene.getScene('Game');g.player.x=2000;g.player.y=580;g.runStart=Promise.resolve({run_id:'cinema-fixture',ranked:false});window.advances=0;GamePortal.advanceRun=async()=>{window.advances++;throw Error('offline fixture');};window.crossing=g.enterCastle();g.enterCastle();});
++  await page.waitForTimeout(300);
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return g.stageId==='forest' && g.cinematic && g.player.y<580 && g.player.y>400;}),'entry must walk in the forest before restart');
++  await ready('castle');
++  assert.deepEqual(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return {advance:window.advances,cinematic:g.cinematic,practice:g.isPractice,run:g.carry.run.run_id,error:!!g.saveError,t:g.t<.2};}),{advance:1,cinematic:null,practice:true,run:'cinema-fixture',error:true,t:true});
++  console.log('OK: physical entry, once-only advance, offline carry and smooth arrival');
++  await restart();await kill();await page.waitForTimeout(400);await restart();await page.waitForTimeout(8000);
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return g.stageId==='forest' && !g.cinematic && !g.stageCleared && !g.world.gateOpen && !GAME.scene.isActive('FinaleOverlay');}),'old victory cannot mutate restarted scene');
++  console.log('OK: shutdown cancels victory and overlay');
++  await page.evaluate(()=>{const g=GAME.scene.getScene('Game');g.stageCleared=true;g.world.openCastleGate();g.player.x=2000;g.player.y=580;g.runStart=Promise.resolve({run_id:'late-fixture',ranked:false});window.advancePending=false;GamePortal.advanceRun=()=>new Promise(resolve=>{window.advancePending=true;window.releaseAdvance=resolve;});window.lateCrossing=g.enterCastle();});
++  await page.waitForFunction(()=>window.advancePending);
++  await restart();
++  await page.evaluate(()=>{window.releaseAdvance({});});
++  assert.equal(await page.evaluate(()=>window.lateCrossing),false,'late advance must settle without restarting current run');
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return g.gameReady&&g.stageId==='forest'&&!g.cinematic&&!g.stageCleared;}));
++  console.log('OK: delayed server response cannot restart a newer run');
++  assert.deepEqual(errors,[]);console.log('Forest cinema checks passed');
++ } finally {await browser.close();}
++})().catch(e=>{console.error(e);process.exitCode=1;});
++

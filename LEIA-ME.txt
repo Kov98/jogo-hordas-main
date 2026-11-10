@@ -1,0 +1,69 @@
+A ÚLTIMA MURALHA — como rodar
+
+1) Descompacte a pasta.
+2) Abra index.html no navegador (Chrome/Edge/Firefox). O Phaser e a logo já estão incluídos, então funciona offline e com duplo clique.
+   Se o navegador bloquear algo, rode um servidor local dentro da pasta:
+       python3 -m http.server 8000
+   e abra http://localhost:8000
+
+Ao abrir: tela de abertura (logo, nome, colégio, curso e descrição). O botão OK aparece depois de ~5 s
+(ou ENTER/clique). Se ninguém clicar, segue sozinha em 15 s e sobe devagar mostrando o menu.
+
+Controles: WASD ou setas para mover (os ataques são automáticos), P pausa, M liga/desliga o som, F tela cheia.
+Seleção: clique/toque no cartão, setas ou A/D para escolher, Enter para jogar e 1–4 como atalhos.
+Heróis: Vanguarda, Sombra Verde, Arcanista e Canalizador (110 HP, velocidade 165, Plasma inicial).
+A floresta tem 14 criaturas comuns, incluindo Bruxa da Névoa e Mago da Tempestade.
+Selos violetas e marcas ciano anunciam ataques no chão: saia da área antes da detonação.
+Novos poderes: Mini Tornado, Feixe de Luz, Plasma e Chuva de Meteoros, com oito níveis cada.
+Tochas e lampiões soltam brasas; impactos de fogo e magia têm mais partículas.
+Derrote o Coração de Raízes para assistir à cutscene e abrir o portão.
+Chegue à porta e use E/Enter ou toque em ENTRAR NO CASTELO: o herói entra,
+a tela faz a transição e ele sai pela porta interna, mantendo os poderes.
+Detalhes da expansão: docs/PODERES-E-CINEMA.md.
+Terceira fase: Inferno — Fortaleza das Correntes; a vitória final vem após o Arquidemônio das Cinzas.
+Derrotar o Cavaleiro rompe a arena: o herói cai na lava e chega automaticamente ao Inferno.
+O Arquidemônio das Cinzas aparece aos 15:00 do Inferno, com a arena enquadrada pela câmera.
+E/Enter ou toque também interagem com altares e os três símbolos secretos da floresta.
+Altares oferecem relíquias com vantagens e contrapartidas em troca de vida.
+Quatro evoluções novas aparecem nos baús; G mostra as receitas e relíquias.
+C no menu/seleção abre a coleção e os desafios de aparências/poderes iniciais.
+Som ambiente e trilha são sintetizados offline; M silencia tudo.
+O Inferno tem muralhas, correntes, fornalhas e criaturas demoníacas.
+Mini Tornado tem espirais e detritos. Feixe de Luz desce do céu sobre um selo no alvo.
+Guia da atualização visual: docs/INFERNO-E-MAGIA.md.
+Guia completo: docs/CATACUMBAS-E-SEGREDOS.md.
+
+Onde editar:
+  js/config.js      nome do jogo, textos e tempos da abertura, balanceamento, limites de desempenho, tempo do chefe
+  js/landscape.js   paisagem animada do menu (ciclo de dia, pôr do sol, noite, nascer do sol)
+  js/intro.js       tela de abertura
+  js/data.js        personagens, poderes, melhorias
+  js/enemies.js     IA, pools e surgimento dos inimigos
+  js/catacombs.js   fortaleza, correntes e armadilhas do Inferno
+  js/exploration.js altares, símbolos e Guardião do Juramento
+  js/meta.js        coleção, aparências e poderes iniciais alternativos
+  js/soundscape.js  ambientação e trilha procedural
+  js/boss.js        Cavaleiro Sombrio e seus ataques
+  js/map.js         cenário da fase (gerado uma vez por partida, com semente fixa)
+  assets/logo-60-anos.png   logo original (a versão usada no jogo está embutida em js/logo.js)
+
+Parâmetros de teste na URL:
+  ?nointro        pula a tela de abertura
+  ?hora=50&fixo   congela o fundo do menu num ponto do ciclo (0-84 s: dia 0-34, pôr do sol 44, noite 54-68, nascer 76)
+  ?boss=30        chefe aos 30 segundos
+  &god            invencível
+  &debug          mostra FPS e contagem de inimigos
+  &t=200          começa aos 200 segundos de partida
+  &char=vanguard | ranger | mage | channeler   pula a abertura e a seleção de personagem
+
+CONTAS, RANKING E ADMINISTRADOR
+- No Windows, execute python server.py nesta pasta e abra http://127.0.0.1:5501/.
+- Inicie ./INICIAR-JOGO.sh e abra http://127.0.0.1:5501/.
+- Entrar é opcional. Cadastre um nome de 3 a 20 caracteres e uma senha.
+- O ranking registra pontos, abates e dano causado nas partidas normais.
+- A conta inicial é admin. Consulte a credencial inicial no arquivo privado:
+  ~/.local/share/a-ultima-muralha/admin-inicial.json
+- Entre como admin e pressione F2 ou use o botão ADMIN para abrir o painel.
+- Partidas de administrador ou com regras alteradas são treinos e não competem.
+- Dados e senhas ficam fora da pasta publicada e fora do Git.
+- Detalhes de execução, persistência e testes: docs/CONTAS-SERVIDOR.md.

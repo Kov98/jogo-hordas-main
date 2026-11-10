@@ -1,0 +1,2581 @@
+Local review package, compared with the pre-feature ZIP. No Git repository.
+
+Changed files:
+LEIA-ME.txt
+docs/PODERES-E-CINEMA.md
+js/admin.js
+js/art.js
+js/boss.js
+js/config.js
+js/data.js
+js/enemies.js
+js/finale.js
+js/forest-art.js
+js/forest-enemies.js
+js/forest.js
+js/fx.js
+js/game.js
+js/guide.js
+js/map.js
+js/player.js
+js/portal.js
+js/powers.js
+js/progression.js
+js/scenes.js
+js/sprites.js
+js/ui.js
+server.py
+tests/ambient_fx_checks.cjs
+tests/browser_accounts.cjs
+tests/browser_accounts.py
+tests/browser_forest.cjs
+tests/browser_journey.cjs
+tests/browser_new_content.cjs
+tests/browser_portal_controls.cjs
+tests/forest_cinema_checks.cjs
+tests/new_creatures_checks.cjs
+tests/new_powers_checks.cjs
+tests/selector_checks.cjs
+tests/test_accounts.py
+
+--- before/LEIA-ME.txt
++++ after/LEIA-ME.txt
+@@ -9,8 +9,12 @@
+ Ao abrir: tela de abertura (logo, nome, colégio, curso e descrição). O botão OK aparece depois de ~5 s
+ (ou ENTER/clique). Se ninguém clicar, segue sozinha em 15 s e sobe devagar mostrando o menu.
+ 
+ Controles: WASD ou setas para mover (os ataques são automáticos), P pausa, M liga/desliga o som, F tela cheia.
++Seleção: clique/toque no cartão, setas ou A/D para escolher, Enter para jogar e 1–4 como atalhos.
++Heróis: Vanguarda, Sombra Verde, Arcanista e Canalizador (110 HP, velocidade 165, Plasma inicial).
++A floresta tem 14 criaturas comuns, incluindo Bruxa da Névoa e Mago da Tempestade.
++Selos violetas e marcas ciano anunciam ataques no chão: saia da área antes da detonação.
+ 
+ Onde editar:
+   js/config.js      nome do jogo, textos e tempos da abertura, balanceamento, limites de desempenho, tempo do chefe
+   js/landscape.js   paisagem animada do menu (ciclo de dia, pôr do sol, noite, nascer do sol)
+@@ -27,9 +31,9 @@
+   ?boss=30        chefe aos 30 segundos
+   &god            invencível
+   &debug          mostra FPS e contagem de inimigos
+   &t=200          começa aos 200 segundos de partida
+-  &char=vanguard | ranger | mage   pula a abertura e a seleção de personagem
++  &char=vanguard | ranger | mage | channeler   pula a abertura e a seleção de personagem
+ 
+ CONTAS, RANKING E ADMINISTRADOR
+ - Inicie ./INICIAR-JOGO.sh e abra http://127.0.0.1:5501/.
+ - Entrar é opcional. Cadastre um nome de 3 a 20 caracteres e uma senha.
+--- before/docs/PODERES-E-CINEMA.md
++++ after/docs/PODERES-E-CINEMA.md
+@@ -0,0 +1,69 @@
++# Poderes, criaturas e passagem da floresta
++
++Expansão de 07/11/2026. O jogo mantém a floresta escura e as luzes laranja.
++
++## Herói e poderes
++
++O **Canalizador** está disponível desde o início, ao lado de Vanguarda,
++Sombra Verde e Arcanista. Começa com **Plasma**, 110 de vida e velocidade 165.
++Os quatro cartões aceitam clique/toque, setas/A/D e atalhos 1–4.
++
++As escolhas de nível das duas fases incluem quatro armas comuns novas, cada
++uma com oito níveis e ícone próprio:
++
++- **Mini Tornado:** vórtices móveis causam dano repetido e atraem levemente
++  inimigos comuns. Chefes e minibosses não são puxados.
++- **Feixe de Luz:** uma faixa branca/dourada atravessa inimigos durante a
++  canalização; apenas alvos dentro da faixa recebem dano.
++- **Plasma:** disparos ciano com rastros e faíscas, melhorados em quantidade,
++  perfuração e potência.
++- **Chuva de Meteoros:** círculos marcam os impactos antes da descida das
++  rochas e de suas explosões com brasas.
++
++O limite continua em seis armas. Níveis, atributos e as quatro armas novas
++atravessam a porta normalmente. Cada arma limpa seus visuais e ataques ao ser
++destruída ou substituída; projéteis usam o pool compartilhado existente.
++
++## Bruxa e mago elétrico
++
++A floresta tem 14 criaturas comuns. A **Bruxa da Névoa** marca três selos
++violetas antes de detoná-los; o **Mago da Tempestade** anuncia três raios ciano
++em linha, com impactos escalonados. As posições marcadas permanecem fixas,
++permitindo sair das áreas de perigo.
++
++Na dificuldade Média, a bruxa começa aos 185 s e o mago aos 310 s; suas ondas
++próprias chegam aos 235 s e 405 s. A dificuldade afeta os desbloqueios pelo
++diretor existente. Essas criaturas não integram as hordas normais do castelo.
++
++## Partículas e passagem
++
++Tochas e lampiões emitem brasas pequenas que sobem. As fontes compartilham um
++emissor limitado; fontes longe da câmera não emitem nem acumulam partículas.
++Impactos de fogo acrescentam brasas/fumaça, e impactos elétricos têm raios.
++
++O golpe fatal no Coração de Raízes inicia a cutscene: derrota do guardião,
++raízes cedendo, câmera até o portão e folhas abrindo, depois retorno ao herói.
++Combate, dano, XP e pontuação ficam congelados; cenário e efeitos continuam.
++
++Depois, caminhe até a porta e pressione **E/Enter** ou toque em **Entrar no
++castelo**. O herói entra pela abertura, a tela escurece e ele sai pela porta
++interna da próxima fase. O controle volta ao terminar a saída. Build, XP,
++dash, dificuldade, estatísticas e a mesma partida são preservados; a chegada
++recupera vida e reinicia o relógio local. A campanha só termina no castelo.
++
++## Verificação
++
++Os testes usam contas e banco descartáveis, sem alterar dados de uso normal.
++
++```sh
++node tests/new_powers_checks.cjs
++node tests/new_creatures_checks.cjs
++node tests/ambient_fx_checks.cjs
++python -m unittest discover -s tests -v
++python tests/browser_accounts.py --new-content
++python tests/browser_accounts.py --forest-cinema
++```
++
++Os runners de navegador precisam de Playwright e Chrome/Chromium;
++`PLAYWRIGHT_MODULE` e `CHROME_PATH` selecionam as instalações locais.
++Evidências e progresso desta implementação: `docs/expansao-poderes/`.
+--- before/js/admin.js
++++ after/js/admin.js
+@@ -58,8 +58,9 @@
+   },
+   open() {
+     if (!GamePortal.isAdmin) return GamePortal.notice('Acesso exclusivo do administrador.');
+     const dialog = GamePortal.openDialog('Administração');
++    if (!dialog) return;
+     const node = (tag, text, className) => { const el = document.createElement(tag); if (text) el.textContent = text; if (className) el.className = className; return el; };
+     const nav = node('div', '', 'admin-tabs'), content = node('div', '', 'admin-content');
+     const status = node('p', '', 'admin-status'); status.setAttribute('role', 'status');
+     dialog.body.append(nav, content, status);
+--- before/js/art.js
++++ after/js/art.js
+@@ -80,8 +80,23 @@
+     if (o.weapon === 'axe' || o.weapon === 'club') { P.r(-1, -10, 5, 3, '#929f9f'); P.r(3, -10, 1, 4, metal); }
+     P.r(-2, 0, 6, 1, '#b69b61'); P.r(0, 1, 1, 3, wood); P.p(0, 4, '#c7b077');
+   }
+   g.restore();
++}
++
++function drawChanneler(P, f) {
++  const b=f%2, step=[0,1,0,-1][f], ink='#101e29', charcoal='#303c49', edge='#627583', cyan='#79e7f2';
++  P.shadow(12,22,16);
++  P.r(5,9+b,13,11,ink);P.r(6,10+b,11,9,charcoal);P.line(6,10+b,6+step,20,cyan);P.line(16,10+b,17-step,20,'#387b8b');
++  for(const [x,dy] of [[8,step],[13,-step]]) {P.r(x,17,3,4,ink);P.r(x,20+dy,4,2,edge);P.r(x,20+dy,3,1,cyan);}
++  P.r(7,9+b,10,8,charcoal);P.r(8,10+b,2,6,edge);P.r(14,10+b,2,6,'#1c2b39');
++  P.line(10,10+b,12,13+b,cyan);P.line(14,10+b,12,13+b,cyan);P.r(11,13+b,2,3,'#bafaff');P.r(7,17,10,1,'#4d7d89');
++  P.r(7,3+b,10,7,ink);P.r(8,4+b,8,5,'#bf9b84');P.r(8,3+b,8,2,charcoal);P.r(8,4+b,2,2,edge);P.p(10,6+b,'#1b3546');P.p(14,6+b,cyan);
++  // Open collar and a plasma focus held forward, instead of a staff or hat.
++  P.r(6,9+b,3,3,edge);P.r(15,9+b,3,3,'#456473');P.r(4,11+b,3,5,charcoal);P.r(4,15+b,2,2,'#d9b297');
++  P.line(17,12+b,20,14+b,charcoal,3);P.r(19,14+b,3,2,'#c8b29f');
++  P.disc(21,11+b,3,'#23617b');P.disc(21,11+b,2,cyan);P.r(20,10+b,2,2,'#edffff');
++  P.line(19,8+b,18,7+b,cyan);P.p(23,8+f,cyan);P.p(19-f%2,17+b,'#aff7ff');
+ }
+ 
+ function drawRefinedHero(P, f, id) {
+   const b = f % 2, step = [0, 1, 0, -1][f % 4];
+--- before/js/boss.js
++++ after/js/boss.js
+@@ -175,8 +175,9 @@
+   die() {
+     if (!this.alive) return;
+     const sc = this.scene;
+     this.alive = false; this.state = 'dead';
++    if (sc.stageId === 'forest') sc.beginForestVictory();
+     sc.enemyShots.clear(); sc.hazards.length = 0; sc.fx.ground.length = 0;
+     this.sprite.anims.stop(); this.sprite.setFrame(0).clearTint();
+     this.aura.setAlpha(0);
+     sc.announce(this.data.name + ' derrotado!', 0xffe070);
+--- before/js/config.js
++++ after/js/config.js
+@@ -9,9 +9,9 @@
+     welcome: 'Bem-vindo ao trabalho de',
+     author: 'Kaike Oliveira Cabral Araújo',
+     school: 'Aluno do Colégio Estadual Barbosa Ferraz',
+     course: 'Curso: 2º DS',
+-    description: 'Três guerreiros precisam atravessar a Floresta dos Esquecidos para chegar ao castelo. Siga os lampiões, sobreviva às criaturas da noite e enfrente os guardiões do caminho até o Cavaleiro Sombrio.',
++    description: 'Quatro heróis precisam atravessar a Floresta dos Esquecidos para chegar ao castelo. Siga os lampiões, sobreviva às criaturas da noite e enfrente os guardiões do caminho até o Cavaleiro Sombrio.',
+     wish: 'Desejo a você uma ótima experiência de jogo!',
+     okAfterMs: 5200,    // quando o botão OK aparece
+     autoMs: 15000,      // segue sozinho depois desse tempo
+     slideMs: 2600,      // duração da subida que revela o menu
+--- before/js/data.js
++++ after/js/data.js
+@@ -24,8 +24,15 @@
+     desc: 'Manto violeta e orbe flutuante. Detona explosões arcanas sobre grupos de inimigos.',
+     startPower: 'arcane',
+     hp: 100, speed: 160, color: 0x7b3fd0,
+     stats: { Vida: 0.5, Velocidade: 0.6, Alcance: 0.6, Área: 0.95 },
++  },
++  channeler: {
++    id: 'channeler', name: 'Canalizador', title: 'Condutor de energia',
++    desc: 'Vestes carvão, foco ciano e plasma nas mãos. Dispara esferas elétricas que atravessam a horda.',
++    startPower: 'plasma',
++    hp: 110, speed: 165, color: 0x56e7f2,
++    stats: { Vida: 0.6, Velocidade: 0.7, Alcance: 0.85, Área: 0.55 },
+   },
+ };
+ 
+ // ---------- Melhorias passivas (atributos) ----------
+@@ -169,8 +176,68 @@
+       { text: 'Pulsa 15% mais rápido',      apply: (s) => { s.cooldown *= 0.85; } },
+     ],
+   },
+ };
++
++// Quatro conjurações comuns; sete melhorias próprias levam cada uma ao nível 8.
++Object.assign(POWERS, {
++  cyclone: {
++    id: 'cyclone', name: 'Mini Tornado', icon: 'cyclone',
++    desc: 'Vórtices móveis varrem a horda e puxam levemente inimigos comuns.',
++    base: { damage: 8, cooldown: 2.4, count: 1, speed: 115, range: 390, radius: 38, duration: 2.3, hitCd: 0.3, pull: 35 },
++    upgrades: [
++      { text: '+4 de dano por volta', apply: s => { s.damage += 4; } },
++      { text: '+12 de raio do vórtice', apply: s => { s.radius += 12; } },
++      { text: 'Dois tornados por conjuração', apply: s => { s.count = 2; } },
++      { text: 'Ventos 18% mais frequentes', apply: s => { s.cooldown *= 0.82; } },
++      { text: '+35 de velocidade e +90 de alcance', apply: s => { s.speed += 35; s.range += 90; } },
++      { text: '+6 de dano e +0,5 s de duração', apply: s => { s.damage += 6; s.duration += 0.5; } },
++      { text: 'Três tornados e voltas 15% mais rápidas', apply: s => { s.count = 3; s.hitCd *= 0.85; } },
++    ],
++  },
++  radiant_beam: {
++    id: 'radiant_beam', name: 'Feixe de Luz', icon: 'radiant_beam',
++    desc: 'Sustenta uma faixa branca e dourada que atravessa todos os alvos.',
++    base: { damage: 10, cooldown: 2.6, range: 440, width: 26, duration: 0.8, hitCd: 0.2 },
++    upgrades: [
++      { text: '+5 de dano por pulso', apply: s => { s.damage += 5; } },
++      { text: '+14 de largura luminosa', apply: s => { s.width += 14; } },
++      { text: '+0,25 s de canalização', apply: s => { s.duration += 0.25; } },
++      { text: 'Canaliza 15% mais frequentemente', apply: s => { s.cooldown *= 0.85; } },
++      { text: '+110 de alcance da luz', apply: s => { s.range += 110; } },
++      { text: '+7 de dano por pulso', apply: s => { s.damage += 7; } },
++      { text: 'Pulsos 20% mais rápidos e +10 de largura', apply: s => { s.hitCd *= 0.8; s.width += 10; } },
++    ],
++  },
++  plasma: {
++    id: 'plasma', name: 'Plasma', icon: 'plasma',
++    desc: 'Esferas ciano com núcleo elétrico perfuram a horda e deixam rastros.',
++    base: { damage: 16, cooldown: 1.1, count: 1, speed: 440, range: 570, radius: 10, pierce: 1, spread: 0.13 },
++    upgrades: [
++      { text: '+1 esfera por descarga', apply: s => { s.count += 1; } },
++      { text: '+6 de dano de plasma', apply: s => { s.damage += 6; } },
++      { text: 'Perfura +1 alvo', apply: s => { s.pierce += 1; } },
++      { text: 'Descargas 16% mais rápidas', apply: s => { s.cooldown *= 0.84; } },
++      { text: '+1 esfera e +90 de alcance', apply: s => { s.count += 1; s.range += 90; } },
++      { text: '+8 de dano e +4 de raio', apply: s => { s.damage += 8; s.radius += 4; } },
++      { text: 'Perfura +2 alvos e +100 de velocidade', apply: s => { s.pierce += 2; s.speed += 100; } },
++    ],
++  },
++  meteor: {
++    id: 'meteor', name: 'Chuva de Meteoros', icon: 'meteor',
++    desc: 'Anuncia impactos no chão antes de uma queda de fogo e ondas de choque.',
++    base: { damage: 38, cooldown: 3.4, count: 1, range: 460, radius: 66, warning: 0.78 },
++    upgrades: [
++      { text: '+14 de dano de impacto', apply: s => { s.damage += 14; } },
++      { text: '+18 de raio da cratera', apply: s => { s.radius += 18; } },
++      { text: 'Dois meteoros por chuva', apply: s => { s.count = 2; } },
++      { text: 'Chuvas 16% mais frequentes', apply: s => { s.cooldown *= 0.84; } },
++      { text: '+100 de alcance e aviso 0,1 s menor', apply: s => { s.range += 100; s.warning -= 0.1; } },
++      { text: '+20 de dano e +12 de raio', apply: s => { s.damage += 20; s.radius += 12; } },
++      { text: 'Três meteoros e +10 de dano', apply: s => { s.count = 3; s.damage += 10; } },
++    ],
++  },
++});
+ 
+ // Armas adicionais: oito níveis completos.
+ for (const [id, name, desc, base] of [
+   ['axes', 'Machados do Crepúsculo', 'Machados descrevem arcos e retornam, cortando na ida e na volta.', { damage: 20, cooldown: 1.8, count: 2, range: 280, radius: 22 }],
+--- before/js/enemies.js
++++ after/js/enemies.js
+@@ -335,13 +335,24 @@
+           e.atkCd = d.shot.cd * rand(0.85, 1.2);
+         }
+         // artilheiro: marca uma área no chão
+         if (sc.spawningEnabled && !sc.ended && !sc.bossStarted && d.shell && e.shellCd <= 0 && dist < d.shell.range) {
+-          sc.addHazard({ shape: 'circle', x: p.x, y: p.y, r: d.shell.radius, delay: d.shell.delay, dmg: d.shell.dmg * dmgScale, col: d.shell.col ?? (d.poison ? 0x91d442 : d.storm ? 0x8edfff : 0xff8a30), kind:d.shell.kind });
++          const shell = d.shell;
++          const mark = (x,y,delay) => sc.addHazard({ shape:'circle', x, y, r:shell.radius, delay, dmg:shell.dmg*dmgScale, col:shell.col ?? (d.poison ? 0x91d442 : d.storm ? 0x8edfff : 0xff8a30), kind:shell.kind });
++          // Coordinates are captured now; dodging never drags a marked attack.
++          mark(p.x,p.y,shell.delay);
++          if (shell.pattern === 'curse') {
++            // Three simultaneous seals form a triangle with clear escape gaps.
++            mark(p.x + nx*78 - ny*86,p.y + ny*78 + nx*86,shell.delay);
++            mark(p.x + nx*78 + ny*86,p.y + ny*78 - nx*86,shell.delay);
++          } else if (shell.pattern === 'storm') {
++            // Lightning walks along the casting direction, with staggered warnings.
++            for (let i=1;i<=2;i++) mark(p.x+nx*90*i,p.y+ny*90*i,shell.delay+.22*i);
++          }
+           if (e.isMiniBoss && d.storm) {
+             for (let i=0;i<4;i++) { const a=i*Math.PI/2+e.phase; sc.addHazard({shape:'circle',x:p.x+Math.cos(a)*110,y:p.y+Math.sin(a)*110,r:48,delay:1.45,dmg:d.shell.dmg*dmgScale,col:0x8edfff}); }
+           }
+-          sc.fx.burst(d.stage === 'forest' ? 'bone' : 'fire', e.x + (e.sprite.flipX ? -20 : 20), e.y - 6, 6);
++          sc.fx.burst(shell.pattern ? shell.kind : d.stage === 'forest' ? 'bone' : 'fire', e.x + (e.sprite.flipX ? -20 : 20), e.y - 6, 6);
+           e.shellCd = d.shell.cd * rand(0.9, 1.15);
+         }
+         // invocador
+         if (d.summon && sc.spawningEnabled && !sc.ended && !sc.bossStarted) {
+--- before/js/finale.js
++++ after/js/finale.js
+@@ -1,11 +1,11 @@
+ // A sobreposição tem câmera própria: o zoom do mundo não desloca as barras.
+ class FinaleOverlayScene extends Phaser.Scene {
+   constructor() { super('FinaleOverlay'); }
+-  create() {
++  create(data = {}) {
+     this.add.rectangle(CONFIG.width / 2, 21, CONFIG.width, 42, 0x000000);
+     this.add.rectangle(CONFIG.width / 2, CONFIG.height - 21, CONFIG.width, 42, 0x000000);
+-    this.caption = mkText(this, CONFIG.width / 2, CONFIG.height - 66, 'O SILÊNCIO NÃO ERA O FIM.', 19, '#dec9a6').setOrigin(.5);
++    this.caption = mkText(this, CONFIG.width / 2, CONFIG.height - 66, data.caption || 'O SILÊNCIO NÃO ERA O FIM.', 19, '#dec9a6').setOrigin(.5);
+   }
+ }
+ 
+ // Desfecho do castelo: o mesmo círculo ritual se rompe sob os pés do herói.
+--- before/js/forest-art.js
++++ after/js/forest-art.js
+@@ -352,8 +352,24 @@
+     P.line(179, 55, 176, 61, '#1c3530'); P.line(176, 61, 180, 70, '#1c3530');
+   };
+   make('gate_closed', 256, 160, gate(false), 3);
+   make('gate_open', 256, 160, gate(true), 3);
++  // Separate hinges keep the stone facade motionless during opening.
++  for (const [side, offset] of [['left', 104], ['right', 128]]) {
++    make('gate_leaf_' + side, 24, 67, P => {
++      for (let x = 0; x < 24; x += 6) {
++        const source = offset + x, d = Math.abs(source + 3 - 128), top = (d < 6 ? 90 : d < 14 ? 95 : 103) - 87;
++        P.r(x, top, 6, 67 - top, '#51533f'); P.r(x, top, 1, 67 - top, '#8f8a60');
++        P.r(x + 5, top, 1, 67 - top, '#283e31'); P.r(x + 2, 33 + source % 7, 1, 14, '#354735');
++      }
++      for (const y of [28, 56]) {
++        P.r(0, y, 24, 4, '#283c39'); P.r(1, y, 22, 1, '#9ca38b');
++        for (let x = 3; x < 24; x += 8) P.p(x, y + 2, '#cfbc7d');
++      }
++      P.r(side === 'left' ? 23 : 0, 4, 1, 62, '#172f29');
++      P.r(side === 'left' ? 17 : 5, 41, 3, 5, '#b29c60');
++    }, 3);
++  }
+   make('castle_entry', 128, 112, P => {
+     const { stone, panel } = masonry(P, 6509);
+     P.shadow(64, 108, 124); panel(4, 20, 120, 87);
+     P.r(34, 48, 60, 57, '#0a1720'); P.r(40, 34, 48, 17, '#0a1720');
+--- before/js/forest-enemies.js
++++ after/js/forest-enemies.js
+@@ -2,11 +2,20 @@
+ const FOREST_ENEMY_IDS = Object.freeze([
+   'forest_wolf', 'forest_spider', 'forest_wisp', 'forest_bandit',
+   'forest_rootling', 'forest_moth', 'forest_druid', 'forest_stalker',
+   'forest_boar', 'forest_snake', 'forest_raven', 'forest_sentinel',
++  'forest_witch', 'forest_storm_mage',
+ ]);
+ 
+ Object.assign(ENEMIES, {
++  forest_witch: {
++    stage:'forest', name:'Bruxa da Névoa', kind:'caster', hp:70, speed:49, dmg:8, radius:13, xp:8, from:185, weight:2.8, maxAlive:5, keep:300,
++    shell:{pattern:'curse',range:520,radius:43,delay:1.5,dmg:15,cd:6.4,col:0xc48aff,kind:'dark'},
++  },
++  forest_storm_mage: {
++    stage:'forest', name:'Mago da Tempestade', kind:'caster', hp:92, speed:46, dmg:9, radius:14, xp:10, from:310, weight:2.3, maxAlive:4, keep:320,
++    shell:{pattern:'storm',range:560,radius:35,delay:1.2,dmg:17,cd:6.8,col:0x8feaff,kind:'spark'},
++  },
+   forest_wolf: {
+     stage:'forest', name:'Lobo da Penumbra', kind:'melee', hp:18, speed:88, dmg:6, radius:12, xp:1, from:0, weight:8,
+     charge:{range:290,min:95,windup:.55,dur:.4,mul:2.7,cd:4.2,recover:.55,col:0xb2c9aa},
+   },
+@@ -73,10 +82,12 @@
+   {t:85,type:'pack',list:{forest_boar:5,forest_wolf:6},msg:'A terra treme entre as raízes!'},
+   {t:120,type:'pack',list:{forest_wolf:12,forest_bandit:4},msg:'Uivos entre as árvores!'},
+   {t:175,type:'ring',enemy:'forest_snake',count:12,msg:'Sibilos surgem do lodo!'},
+   {t:195,type:'ring',enemy:'forest_spider',count:18,msg:'O brejo se move ao seu redor!'},
++  {t:235,type:'pack',list:{forest_witch:3,forest_wisp:5},msg:'Selos violetas rompem a névoa!'},
+   {t:270,type:'pack',list:{forest_rootling:8,forest_wisp:6},msg:'As raízes despertam!'},
+   {t:375,type:'pack',list:{forest_druid:2,forest_bandit:8,forest_wolf:8},msg:'O círculo dos druidas se fecha!'},
++  {t:405,type:'pack',list:{forest_storm_mage:3,forest_raven:6},msg:'A tempestade encontrou seu caminho!'},
+   {t:420,type:'swarm',enemy:'forest_raven',count:16,msg:'Os corvos encontraram sua trilha!'},
+   {t:465,type:'swarm',enemy:'forest_stalker',count:8,msg:'Algo caça nas sombras!'},
+   {t:560,type:'ring',enemy:'forest_moth',count:24,msg:'Uma nuvem de asas fúnebres!'},
+   {t:675,type:'pack',list:{forest_rootling:10,forest_druid:2,forest_spider:10},msg:'A floresta defende seu coração!'},
+@@ -301,14 +312,48 @@
+   P.line(20,2+bob,23,7+bob,leather,2); P.line(23,7+bob,23,16+bob,leather); P.line(23,16+bob,20,21+bob,leather,2); P.line(20,2+bob,20,21+bob,'#d5d5b1');
+   P.r(2,13+bob,1,8,leather); P.r(1,12+bob,3,5,'#86968e'); P.r(1,12+bob,1,5,'#d9dcca');
+ }
+ 
++function drawForestWitch(P, frame) {
++  const b=frame%2, sway=[0,1,0,-1][frame], ink='#1b1727', robe='#584064', hi='#a67db5', violet='#d9a2ff';
++  P.shadow(12,22,18);
++  // Crooked brim and high bent crown separate her from the woodland druid.
++  P.line(8,7+b,12,1+b,ink,4);P.line(12,1+b,17,2+b,ink,2);
++  P.line(9,6+b,12,2+b,robe,2);P.p(15,1+b,hi);
++  P.r(3,7+b,16,2,ink);P.r(4,7+b,14,1,hi);P.p(8,6+b,violet);
++  P.r(9,9+b,6,5,ink);P.r(10,9+b,4,4,'#acaaa0');P.p(11,10+b,violet);P.r(14,11+b,2,1,'#d0c1ac');
++  P.line(8,10+b,6,16+b,'#aeb2a1',2);P.line(15,10+b,16,15+b,'#767b77',2);
++  P.r(7,13+b,9,6,ink);P.r(8,13+b,7,5,robe);P.r(7,18,10,3,robe);
++  P.line(8,14+b,6+sway,21,hi);P.line(14,15+b,17-sway,21,ink,2);
++  P.r(8+sway,21,3,1,'#b49bc1');P.r(14-sway,21,3,1,'#b49bc1');
++  P.line(8,14+b,4,17+b,robe,2);P.p(3,17+b,'#c8b9ac');P.line(15,14+b,19,15+b,hi,2);
++  P.line(20,7+b,20,22,'#836249',2);P.line(20,8+b,17,5+b,'#b18abf');
++  P.disc(20,6+b,3,'#38233e');P.disc(20,6+b,2,'#9b58bb');P.p(20,5+b,'#f0cfff');
++  P.p(2,10+frame,violet);P.p(22,13-frame,hi);P.r(10,16+b,3,1,violet);
++}
++
++function drawForestStormMage(P, frame) {
++  const b=frame%2, step=[0,1,0,-1][frame], ink='#11252e', cloth='#305563', edge='#7db6c6', cyan='#9df4ff';
++  P.shadow(12,22,19);
++  // Bare white hair, broad lightning pauldrons and a forked rod: no hat.
++  P.line(7,4+b,5,1+b,'#afc9d2',2);P.line(10,3+b,9,b,'#e5f7f7',2);P.line(14,3+b,17,1+b,edge,2);
++  P.r(7,3+b,10,6,ink);P.r(8,3+b,8,2,'#d3e9ea');P.r(9,5+b,6,4,'#829b9f');P.r(9,6+b,6,1,ink);P.p(10,6+b,cyan);P.p(14,6+b,cyan);
++  P.r(5,10+b,14,9,ink);P.r(6,10+b,12,8,cloth);P.r(7,11+b,2,6,edge);P.r(15,11+b,2,7,'#223d4c');
++  P.line(12,10+b,10,14+b,cyan);P.line(10,14+b,13,14+b,cyan);P.line(13,14+b,11,18+b,cyan);
++  P.line(5,10+b,2,7+b,edge,3);P.line(17,10+b,20,7+b,edge,3);P.p(2,7+b,cyan);P.p(20,7+b,cyan);
++  P.r(5,12+b,2,5,cloth);P.r(18,12+b,2,5,cloth);P.p(5,16+b,'#b8cbca');P.p(19,16+b,'#b8cbca');
++  P.r(8,18,3,3,ink);P.r(13,18,3,3,ink);P.r(7+step,21,5,1,edge);P.r(13-step,21,5,1,edge);
++  P.line(22,8+b,22,22,'#667b83');P.line(22,8+b,20,4+b,cyan);P.line(22,8+b,23,3+b,cyan);
++  P.p(3+frame,3+b,cyan);P.p(21-frame,10+b,'#dffeff');
++}
++
+ const forestArt = (fn, k=2) => ({custom:true,frames:4,w:24,h:24,k,visualScale:1,fn});
+ Object.assign(ENEMY_ART, {
+   forest_wolf:forestArt(drawForestWolf), forest_spider:forestArt(drawForestSpider),
+   forest_wisp:forestArt(drawForestWisp), forest_bandit:forestArt(drawForestBandit),
+   forest_rootling:forestArt(drawForestRootling), forest_moth:forestArt(drawForestMoth),
+   forest_druid:forestArt(drawForestDruid), forest_stalker:forestArt(drawForestStalker),
+   forest_boar:forestArt(drawForestBoar), forest_snake:forestArt(drawForestSnake),
+   forest_raven:forestArt(drawForestRaven), forest_sentinel:forestArt(drawForestSentinel),
++  forest_witch:forestArt(drawForestWitch), forest_storm_mage:forestArt(drawForestStormMage),
+   forest_matriarch:forestArt(drawForestMatriarch,4), forest_huntsman:forestArt(drawForestHuntsman,4),
+ });
+--- before/js/forest.js
++++ after/js/forest.js
+@@ -249,8 +249,9 @@
+     this.light(x, y - 17, 0.38, 0.42, 'forest_glow_warm');
+     const spill = this.decal('forest_glow_warm', x + 4, opt.groundY === undefined ? y + 2 : opt.groundY, 1, 0.32)
+       .setScale(1.65, 0.5).setBlendMode(Phaser.BlendModes.ADD);
+     const lamp = { x, y, image, glow, spill, phase: this.rng() * Math.PI * 2 };
++    this.fireSources.push({ x, y: y - 17, rate: 3 });
+     this.lanterns.push(lamp); return lamp;
+   }
+ 
+   buildForestStories() {
+@@ -284,9 +285,14 @@
+     this.scene.add.tileSprite((right + this.W) / 2, y, this.W - right, 384, 'forest_rampart').setOrigin(0.5, 1).setDepth(y - 3);
+     this.scene.add.tileSprite(this.W / 2, y + 25, this.W, 52, 'forest_wall_shadow').setDepth(-6020).setAlpha(0.72);
+     this.decal('forest_shadow', x, y + 5, 3.8, 0.55).setScale(4.5, 0.8);
+     this.decal('forest_gate_approach', x, y + 59, 1, 0.92).setDepth(-9810);
+-    this.gateImage = this.prop('forest_gate_closed', x, y);
++    this.gateImage = this.prop('forest_gate_open', x, y);
++    this.gateLeaves = [
++      this.scene.add.image(x - 72, y - 18, 'forest_gate_leaf_left').setOrigin(0, 1),
++      this.scene.add.image(x + 72, y - 18, 'forest_gate_leaf_right').setOrigin(1, 1),
++    ];
++    for (const leaf of this.gateLeaves) leaf.setDepth(y + 0.5).setTint(0xb4b8bf);
+     this.forestLantern(x - 106, y - 57, { depth: y + 1, groundY: y + 8, scale: 2.1, alpha: 0.5 });
+     this.forestLantern(x + 106, y - 57, { depth: y + 1, groundY: y + 8, scale: 2.1, alpha: 0.5 });
+     this.light(x, y - 65, 1.1, 0.035, 'forest_glow_warm');
+     this.gateBeacon = this.lights[this.lights.length - 1];
+@@ -344,8 +350,9 @@
+     this.gateOpen = true;
+     this.arenaLock = false;
+     this.hideBarrier();
+     this.gateImage.setTexture('forest_gate_open');
++    for (const leaf of this.gateLeaves || []) leaf.setVisible(false);
+     this.gateBeacon.a = 0.37; this.gateBeacon.sc = 2;
+     this.gateSpill.setAlpha(0.3).setScale(1.8, 0.85);
+   }
+ 
+@@ -353,8 +360,24 @@
+     if (!entity) return false;
+     const radius = entity.radius || 12;
+     return Math.abs(entity.x - this.gate.x) <= 72 - radius &&
+       entity.y >= this.gate.y - 100 + radius && entity.y <= this.gate.y + 100;
++  }
++
++  animateCastleGate() {
++    if (this.gateOpening) return this.gateOpening;
++    if (this.gateOpen) return Promise.resolve(true);
++    const sc = this.scene, initialization = sc.initialization;
++    this.gateOpening = (async () => {
++      sc.cameras.main.shake(1000, 0.002);
++      sc.fx.burst('bone', this.gate.x, this.gate.y - 12, 20);
++      sc.fx.embers(this.gate.x, this.gate.y - 25, 16);
++      const ok = await sc.cinematicTween({ targets: this.gateLeaves, scaleX: 0.07, duration: 1400, ease: 'Sine.easeInOut' });
++      if (!ok || !sc.cinematicValid(initialization)) return false;
++      this.openCastleGate();
++      return true;
++    })();
++    return this.gateOpening;
+   }
+ 
+   constrain(e) {
+     super.constrain(e);
+--- before/js/fx.js
++++ after/js/fx.js
+@@ -52,8 +52,22 @@
+       spark: mk([0x9ad8ff, 0xffffff, 0x60e8ff], 260, 380, 2, true),
+       gold: mk([0xffe070, 0xffffff], 160, 500, 2, true),
+       blood: mk([0xa01818, 0xff2a2a, 0x4a0a10], 220, 600, 2.6, false),
+     };
++    // Brasas pequenas e ascendentes, compartilhadas por fogo e cenário.
++    this.em.ember = scene.add.particles(0, 0, 'px', {
++      emitting: false, maxParticles: 128, lifespan: { min: 500, max: 1100 },
++      speedX: { min: -15, max: 15 }, speedY: { min: -38, max: -14 }, gravityY: -12,
++      scale: { start: 1.05, end: 0 }, alpha: { start: 0.95, end: 0 },
++      tint: [0xff6824, 0xffa13b, 0xffd47c], blendMode: 'ADD',
++    }).setDepth(8920);
++    this.em.smoke = scene.add.particles(0, 0, 'px', {
++      emitting: false, maxParticles: 64, lifespan: { min: 400, max: 850 },
++      speedX: { min: -16, max: 16 }, speedY: { min: -30, max: -10 },
++      scale: { start: 2, end: 5 }, alpha: { start: 0.18, end: 0 },
++      tint: [0x70656b, 0x49404d, 0x292432], blendMode: 'NORMAL',
++    }).setDepth(8880);
++    this.fireSourceCursor = 0;
+   }
+ 
+   dashTrail(player, smoke) {
+     const s = this.dashTrails.find(s => s.dashLife <= 0);
+@@ -85,8 +99,36 @@
+   }
+ 
+   burst(kind, x, y, n) { this.em[kind].explode(n, x, y); }
+ 
++  embers(x, y, count = 1) {
++    this.em.ember.explode(Math.min(12, Math.max(0, Math.floor(count))), x, y);
++  }
++
++  updateFireSources(dt) {
++    const sources = this.scene.world?.fireSources;
++    if (!sources?.length || dt <= 0) return;
++    const v = this.scene.cameras.main.worldView;
++    const step = Math.min(dt, 0.25);
++    for (const source of sources) {
++      source.emberVisible = source.x >= v.x - 32 && source.x <= v.right + 32 &&
++        source.y >= v.y - 48 && source.y <= v.bottom + 48;
++      // Uma fonte distante não acumula emissão para quando a câmera voltar.
++      source.emberCredit = source.emberVisible
++        ? Math.min(1, (source.emberCredit || 0) + step * (source.rate || 3)) : 0;
++    }
++    let budget = 8;
++    const start = (this.fireSourceCursor || 0) % sources.length;
++    for (let i = 0; i < sources.length && budget > 0; i++) {
++      const source = sources[(start + i) % sources.length];
++      if (!source.emberVisible || source.emberCredit < 1) continue;
++      this.embers(source.x, source.y, 1);
++      source.emberCredit -= 1;
++      budget--;
++    }
++    this.fireSourceCursor = (start + 1) % sources.length;
++  }
++
+   // Animação de derrota: o inimigo pisca em branco, achata e some.
+   corpse(e) {
+     for (const s of this.corpses) {
+       if (s.live) continue;
+@@ -122,8 +164,15 @@
+   boom(x, y, r, col, kind) {
+     this.ring(x, y, r * 0.2, r, 0.28, col, 4, 0.35);
+     this.ring(x, y, r * 0.1, r * 0.8, 0.2, 0xffffff, 2, 0.5);
+     this.burst(kind || 'fire', x, y, Math.min(26, 8 + Math.floor(r / 6)));
++    if (!kind || kind === 'fire') {
++      this.embers(x, y, Math.min(10, Math.ceil(r / 12)));
++      this.em.smoke.explode(3, x, y);
++    } else if (kind === 'spark') {
++      this.bolt(x - r * 0.18, y - Math.max(100, r * 2), x, y, 0.22, col || 0x8feaff);
++      this.ring(x, y, 4, r * 0.65, 0.18, 0xc7f5ff, 2);
++    }
+   }
+ 
+   sweep(x, y, range, follow) {
+     for (const s of this.sweeps) {
+@@ -146,8 +195,9 @@
+     }
+   }
+ 
+   update(dt) {
++    this.updateFireSources(dt);
+     for (const s of this.dashTrails) {
+       if (s.dashLife <= 0) continue;
+       s.dashLife -= dt;
+       const p = Math.max(0, s.dashLife / s.dashDur);
+--- before/js/game.js
++++ after/js/game.js
+@@ -21,9 +21,20 @@
+     this.gameReady = false;
+     this.player = null;
+     const initialization = Symbol('partida');
+     this.initialization = initialization;
+-    this.events.once('shutdown', () => { if (this.initialization === initialization) this.initialization = null; });
++    this.cinematic = null;
++    this.cinematicLagPolicy = null;
++    this.cinematicWaits = new Set();
++    this.events.once('shutdown', () => {
++      if (this.initialization !== initialization) return;
++      this.initialization = null;
++      for (const cancel of [...this.cinematicWaits]) cancel();
++      this.cinematicWaits.clear();
++      this.restoreCinematicClock();
++      this.cinematic = null;
++      this.scene.stop('FinaleOverlay');
++    });
+     const q = new URLSearchParams(location.search);
+     await GamePortal.ready;
+     if (this.initialization !== initialization) return;
+     if (!this.carry && this.stageId === 'castle' && !GamePortal.canPlayStage('castle') && (GamePortal.user || !q.has('stage'))) {
+@@ -76,8 +87,10 @@
+     this.stageDamageMul = this.carry ? 1.2 : this.checkpoint?.stageDamageMul || 1;
+     this.saveError = this.carry?.saveError || null;
+     this.stageCleared = false;
+     this.transitioning = false;
++    this.cinematic = null;
++    this.forestVictory = null;
+     this.runSubmission = null;
+     this.ended = false;
+     this.levelUpOpen = false;
+     this.chestOpen = false;
+@@ -137,8 +150,9 @@
+     this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SHIFT,SPACE,E,ENTER');
+     this.joy = { active: false, ox: 0, oy: 0, x: 0, y: 0 };
+     this.joyG = this.add.graphics().setScrollFactor(0).setDepth(99999);
+     this.input.on('pointerdown', (p) => {
++      if (this.cinematic) return;
+       if (!p.wasTouch || p.x > CONFIG.width - 145 && p.y > CONFIG.height - 240) return;
+       this.joy.active = true; this.joy.id = p.id; this.joy.ox = p.x; this.joy.oy = p.y; this.joy.x = 0; this.joy.y = 0;
+     });
+     this.input.on('pointermove', (p) => {
+@@ -156,23 +170,126 @@
+   }
+ 
+   playCastleArrival() {
+     const entry = this.world.entry;
+-    if (!entry) return Promise.resolve();
++    if (!entry) return Promise.resolve(true);
++    const initialization = this.initialization;
++    this.setCinematic('castle-arrival', 'ALÉM DA MURALHA.');
+     const p = this.player;
+     p.x = entry.x; p.y = entry.startY;
+     p.sprite.setPosition(p.x, p.y).setDepth(p.y + 20);
+     p.shadow.setPosition(p.x, p.y + 20);
+     p.sprite.anims.resume();
+     this.cameras.main.centerOn(p.x, p.y);
++    this.cameras.main.fadeIn(650, 0, 0, 0);
++    return this.cinematicTween({ targets: p, y: entry.endY, duration: 1250, ease: 'Sine.easeOut',
++      onUpdate: () => this.syncCinematicPlayer(),
++    }).then(ok => {
++      if (!ok || !this.cinematicValid(initialization)) return false;
++      p.sprite.anims.pause(); p.invuln = 2;
++      this.setCinematic(null);
++      return true;
++    });
++  }
++
++  cinematicValid(initialization) {
++    return !!initialization && this.initialization === initialization && this.scene.isActive() && !this.ended;
++  }
++
++  clearCinematicInput() {
++    this.requestDash = false; this.botInput = null;
++    if (this.joy) { this.joy.active = false; this.joy.x = 0; this.joy.y = 0; }
++    this.joyG?.clear();
++    this.input.keyboard.resetKeys();
++    if (this.player) { this.player.dashT = 0; this.player.moving = false; }
++  }
++
++  setCinematic(state, caption) {
++    if (state && !this.cinematicLagPolicy) {
++      this.cinematicLagPolicy = { maxLag: this.tweens.maxLag, lagSkip: this.tweens.lagSkip };
++      // The default smoothing discards most of a frame longer than 500 ms.
++      // Films must use elapsed wall time, including very low frame rates.
++      this.tweens.setLagSmooth();
++    } else if (!state) this.restoreCinematicClock();
++    this.cinematic = state;
++    this.clearCinematicInput();
++    this.scene.get('UI')?.scene.setVisible(!state);
++    if (!state) { this.scene.stop('FinaleOverlay'); return; }
++    if (!this.scene.isActive('FinaleOverlay')) this.scene.launch('FinaleOverlay', { caption });
++    else this.scene.get('FinaleOverlay').caption?.setText(caption || '');
++    this.player.sprite.anims.pause();
++    this.player.sprite.setAlpha(1).clearTint();
++  }
++
++  restoreCinematicClock() {
++    if (!this.cinematicLagPolicy) return;
++    const { maxLag, lagSkip } = this.cinematicLagPolicy;
++    this.tweens.setLagSmooth(maxLag, lagSkip);
++    this.cinematicLagPolicy = null;
++  }
++
++  // Every animation settles on shutdown, so old async sequences cannot resume a new run.
++  cinematicTween(config) {
++    const initialization = this.initialization;
+     return new Promise(resolve => {
+-      const done = () => { this.events.off('shutdown', done); resolve(); };
+-      this.events.once('shutdown', done);
+-      this.tweens.add({ targets: p, y: entry.endY, duration: 1250, ease: 'Sine.easeOut',
+-        onUpdate: () => { p.sprite.setPosition(p.x, p.y).setDepth(p.y + 20); p.shadow.setPosition(p.x, p.y + 20); },
+-        onComplete: () => { p.sprite.anims.pause(); p.invuln = 2; done(); },
+-      });
++      let tween, settled = false;
++      const finish = ok => {
++        if (settled) return;
++        settled = true;
++        this.cinematicWaits.delete(cancel);
++        if (!ok) { tween?.stop(); tween?.remove(); }
++        resolve(ok && this.cinematicValid(initialization));
++      };
++      const cancel = () => finish(false);
++      this.cinematicWaits.add(cancel);
++      tween = this.tweens.add({ ...config, onComplete: () => finish(true) });
+     });
++  }
++
++  cinematicDelay(duration) {
++    return this.cinematicTween({ targets: { progress: 0 }, progress: 1, duration });
++  }
++
++  syncCinematicPlayer() {
++    const p = this.player;
++    p.sprite.setPosition(p.x, p.y).setDepth(p.y + 20);
++    p.shadow.setPosition(p.x, p.y + 20).setDepth(p.y - 1);
++  }
++
++  beginForestVictory() {
++    if (this.forestVictory || this.stageId !== 'forest' || this.ended || this.stageCleared) return this.forestVictory;
++    this.setCinematic('forest-defeat', 'O CORAÇÃO SILENCIA.');
++    this.spawningEnabled = false;
++    this.enemyShots.clear(); this.hazards.length = 0; this.fx.ground.length = 0;
++    const initialization = this.initialization;
++    this.forestVictory = this.playForestVictory(initialization);
++    return this.forestVictory;
++  }
++
++  async playForestVictory(initialization) {
++    const cam = this.cameras.main, p = this.player, gate = this.world.gate;
++    cam.stopFollow();
++    cam.pan(this.boss?.x || p.x, this.boss?.y || p.y, 700, 'Sine.easeInOut');
++    if (!await this.cinematicDelay(2700) || !this.cinematicValid(initialization)) return false;
++    this.setCinematic('forest-roots', 'AS RAÍZES CEDERAM.');
++    for (const tween of this.world.barrierTweens) { tween.stop(); tween.remove(); }
++    if (this.world.barrierProps.length) {
++      if (!await this.cinematicTween({ targets: this.world.barrierProps, scaleY: 0.12, alpha: 0, duration: 650, ease: 'Sine.easeIn' }) || !this.cinematicValid(initialization)) return false;
++    }
++    this.world.hideBarrier();
++    this.setCinematic('forest-gate', 'O CAMINHO ESTÁ ABERTO.');
++    cam.pan(gate.x, gate.y - 95, 1150, 'Sine.easeInOut'); cam.zoomTo(1, 1150);
++    if (!await this.cinematicDelay(1200) || !this.cinematicValid(initialization)) return false;
++    if (!await this.world.animateCastleGate() || !this.cinematicValid(initialization)) return false;
++    this.setCinematic('forest-return', 'SIGA OS LAMPIÕES ATÉ O CASTELO.');
++    cam.pan(p.x, p.y, 1100, 'Sine.easeInOut');
++    if (!await this.cinematicDelay(1150) || !this.cinematicValid(initialization)) return false;
++    cam.startFollow(p.sprite, true, 0.12, 0.12);
++    this.stageCleared = true;
++    this.setCinematic(null);
++    this.announce('O portão foi aberto! Siga os lampiões ao norte.', 0xffdc9c);
++    Sfx.play('levelup');
++    return true;
+   }
+ 
+   // ---------------------------------------------------------- utilidades usadas por poderes/inimigos
+   announce(msg, color) {
+@@ -191,9 +308,9 @@
+     return out;
+   }
+ 
+   damageEnemy(e, dmg, src) {
+-    if (!e.alive || dmg <= 0) return;
++    if (this.cinematic || !e.alive || dmg <= 0) return;
+     if (e.isBoss) {
+       const before = e.hp;
+       if (e.hurt(dmg)) {
+         this.totalDamage += Math.max(0, before - e.hp);
+@@ -259,9 +376,9 @@
+     }
+   }
+ 
+   // ---------------------------------------------------------- níveis
+-  queueLevelUp() { this.pendingLevels++; }
++  queueLevelUp() { if (!this.cinematic) this.pendingLevels++; }
+ 
+   rollChoices() {
+     const p = this.player, pool = [];
+     for (const pw of p.powers) if (!pw.maxed) pool.push({ key: 'u:' + pw.def.id, type: 'upgrade', id: pw.def.id, w: 2.2 });
+@@ -290,9 +407,9 @@
+     return out;
+   }
+ 
+   openLevelUp() {
+-    if (this.levelUpOpen || this.chestOpen || this.ended) return;
++    if (this.cinematic || this.levelUpOpen || this.chestOpen || this.ended) return;
+     const ui = this.scene.get('UI');
+     if (!ui || !ui.ready) return;
+     this.pendingLevels--;
+     this.levelUpOpen = true;
+@@ -307,9 +424,9 @@
+   }
+ 
+   openEvolutionChest(chest) {
+     const ui = this.scene.get('UI');
+-    if (this.ended || this.levelUpOpen || this.chestOpen || !ui?.ready) return false;
++    if (this.cinematic || this.ended || this.levelUpOpen || this.chestOpen || !ui?.ready) return false;
+     const offers = this.progression.getOffers(chest.canEvolve !== false);
+     if (!offers.length) return false;
+     this.chestOpen = true;
+     this.scene.pause();
+@@ -322,8 +439,9 @@
+     return true;
+   }
+ 
+   applyChoice(c) {
++    if (this.cinematic) return;
+     const p = this.player;
+     if (c.type === 'upgrade' || c.type === 'new') p.addPower(c.id);
+     else if (c.type === 'passive') p.addPassive(c.id);
+     else if (c.type === 'dash') p.upgradeDash();
+@@ -357,16 +475,9 @@
+ 
+   onBossDefeated() {
+     if (this.ended) return;
+     if (this.stage.next) {
+-      if (this.stageCleared) return;
+-      this.stageCleared = true;
+-      this.enemyShots.clear(); this.hazards.length = 0;
+-      this.gems.magnetAll();
+-      this.world.openCastleGate();
+-      this.cameras.main.zoomTo(1, 1000);
+-      this.announce('O portão foi aberto! Siga os lampiões ao norte.', 0xffdc9c);
+-      Sfx.play('levelup');
++      this.beginForestVictory();
+       return;
+     }
+     this.ended = true;
+     this.spawningEnabled = false;
+@@ -387,33 +498,48 @@
+   }
+ 
+   async enterCastle() {
+     const ui = this.scene.get('UI');
+-    if (!this.gameReady || !this.scene.isActive() || this.ended || this.transitioning || !this.stageCleared || !this.world.gateOpen || !this.nearCastleGate() || this.levelUpOpen || this.chestOpen || ui?.paused || GamePortal.dialogOpen) return false;
++    if (this.cinematic || !this.gameReady || !this.scene.isActive() || this.ended || this.transitioning || !this.stageCleared || !this.world.gateOpen || !this.nearCastleGate() || this.levelUpOpen || this.chestOpen || ui?.paused || GamePortal.dialogOpen) return false;
+     this.transitioning = true;
+     const initialization = this.initialization;
++    this.setCinematic('castle-entry', 'ALÉM DA MURALHA.');
++    const p = this.player, gate = this.world.gate;
++    p.sprite.anims.resume();
++    if (!await this.cinematicTween({ targets: p, x: gate.x, y: Math.min(p.y, gate.y + 25), duration: 300, ease: 'Sine.easeInOut', onUpdate: () => this.syncCinematicPlayer() }) || !this.cinematicValid(initialization)) return false;
++    if (!await this.cinematicTween({ targets: p, y: gate.y - 75, duration: 600, ease: 'Linear', onUpdate: () => this.syncCinematicPlayer() }) || !this.cinematicValid(initialization)) return false;
++    p.sprite.anims.pause();
++    this.scene.get('FinaleOverlay').caption?.setAlpha(0);
++    this.cameras.main.fadeOut(350, 0, 0, 0);
++    if (!await this.cinematicDelay(380) || !this.cinematicValid(initialization)) return false;
++    const run = await this.runStart;
++    if (!this.cinematicValid(initialization)) return false;
+     const carry = {
+       player: capturePlayerState(this.player), elapsed: this.totalTime,
+       kills: this.totalKills, damage: this.totalDamage, pendingLevels: this.pendingLevels,
+       consumed: [...this.progression.consumed], completed: [...this.progression.completed],
+       startStageId: this.startStageId, practice: this.isPractice, godMode: this.godMode,
+-      saveError: this.saveError, run: await this.runStart,
++      saveError: this.saveError, run,
+     };
+     try {
+-      if (carry.run?.run_id && !carry.saveError) await GamePortal.advanceRun(carry.run.run_id);
++      if (carry.run?.run_id && !carry.saveError) {
++        await GamePortal.advanceRun(carry.run.run_id);
++        if (!this.cinematicValid(initialization)) return false;
++      }
+     } catch (error) {
++      if (!this.cinematicValid(initialization)) return false;
+       carry.practice = true;
+       carry.saveError = 'A passagem não foi registrada no servidor. Esta campanha segue fora do ranking.';
+       GamePortal.notice(carry.saveError);
+     }
+-    if (this.initialization !== initialization || this.ended) return false;
++    if (!this.cinematicValid(initialization)) return false;
+     if (!carry.run?.run_id && !carry.practice && !carry.saveError && !GamePortal.user) GamePortal.recordGuestAdvance();
+     this.scene.restart({ char: this.charId, difficulty: this.difficultyId, stage: 'castle', carry });
+     return true;
+   }
+ 
+   onPlayerDeath() {
+-    if (this.ended) return;
++    if (this.cinematic || this.ended) return;
+     this.ended = true;
+     const p = this.player;
+     p.sprite.anims.stop(); p.sprite.clearTint();
+     this.fx.burst('blood', p.x, p.y, 18);
+@@ -450,8 +576,9 @@
+   }
+ 
+   // ---------------------------------------------------------- entrada
+   readInput() {
++    if (this.cinematic) return { x: 0, y: 0, dash: false, interact: false };
+     if (this.botInput) return this.botInput;
+     const K = this.keys;
+     let x = 0, y = 0;
+     if (K.A.isDown || K.LEFT.isDown) x -= 1;
+@@ -466,8 +593,14 @@
+   }
+ 
+   // ---------------------------------------------------------- loop principal
+   update(time, delta) {
++    if (this.cinematic && this.world && this.fx) {
++      const dt = Math.max(0, delta / 1000);
++      this.visualTime += dt;
++      this.fx.update(dt); this.world.update(dt, this.visualTime);
++      return;
++    }
+     if (!this.gameReady || this.transitioning) return;
+     const dt = Math.min(delta / 1000, 0.05);
+     this.visualTime += dt;
+     this.drawJoystick();
+@@ -482,12 +615,14 @@
+     for (const e of this.enemies.pool) if (e.alive) this.grid.insert(e);
+     if (this.boss && this.boss.alive) this.grid.insert(this.boss);
+ 
+     this.player.update(dt, input, this.world);
++    if (this.cinematic) return;
+     this.enemies.update(dt);
+     this.encounters.update(dt);
+     if (this.boss) this.boss.update(dt);
+     this.pShots.update(dt);
++    if (this.cinematic) return;
+     this.enemyShots.update(dt);
+     this.gems.update(dt);
+     this.updateHazards(dt);
+     this.fx.update(dt);
+--- before/js/guide.js
++++ after/js/guide.js
+@@ -4,8 +4,9 @@
+     const game = window.GAME?.scene.getScene('Game');
+     const live = game?.gameReady && !game.ended && (game.scene.isActive() || game.scene.isPaused());
+     const p = live ? game.player : null;
+     const dialog = GamePortal.openDialog('Grimório da muralha');
++    if (!dialog) return;
+     dialog.panel.classList.add('portal-dialog-wide');
+     const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+     dialog.body.append(el('p', 'portal-muted', 'Leve uma arma ao nível 8 e obtenha o atributo indicado. A partir dos 5 minutos, abra um baú para escolher uma evolução. Uniões transformam duas armas no máximo em uma e liberam um espaço. Os atributos são preservados.'));
+     dialog.body.append(el('p', 'portal-muted', 'Dash: SHIFT ou ESPAÇO. Melhore até o nível 3, obtenha Passos Leves e use um baú para aprender o Passo de Fumaça. A imunidade dura apenas o dash.'));
+--- before/js/map.js
++++ after/js/map.js
+@@ -17,8 +17,9 @@
+     this.A = CONFIG.arena;
+     this.arenaLock = false;
+     this.solids = new Grid(256);   // obstáculos estáticos (círculos)
+     this.lights = [];              // tochas e janelas com brilho animado
++    this.fireSources = [];         // fontes para o emissor compartilhado de brasas
+     this.rng = mulberry32(CONFIG.seed);
+     this.tmp = [];
+     this.placed = [];              // posições de pedras/ruínas (espaçamento)
+     this.PATH = 70;                // meia-largura dos caminhos
+@@ -78,8 +79,9 @@
+     const fl = s.add.sprite(x, y - 47, 'flame').setDepth(y + 1).setTint(0xffb864);
+     fl.play('flame'); fl.anims.setProgress(this.rng());
+     this.light(x, y - 46, 2.5, 0.4);
+     this.light(x, y - 46, 0.6, 0.45);
++    this.fireSources.push({ x, y: y - 47, rate: 5 });
+     this.decal('dungeon_fire_glow', x + 8, y + 4, 1, 0.13).setScale(1.1, 0.22).setBlendMode(Phaser.BlendModes.ADD);
+     this.solid(x, y - 4, 7);
+   }
+ 
+--- before/js/player.js
++++ after/js/player.js
+@@ -124,8 +124,9 @@
+     for (const p of this.powers) p.update(dt);
+   }
+ 
+   takeDamage(n) {
++    if (this.scene.cinematic) return false;
+     if (this.dead || this.invuln > 0 || (this.dashSmoke && this.dashT > 0)) return false;
+     if (this.scene.godMode) return false;
+     this.hp -= n;
+     this.invuln = CONFIG.player.invuln;
+@@ -143,8 +144,9 @@
+     this.scene.fx.number(this.x, this.y - 30, '+' + Math.round(n), '#7aff9a', false);
+   }
+ 
+   gainXp(n) {
++    if (this.scene.cinematic) return;
+     if (this.level >= 100) return;
+     this.xp += n;
+     while (this.level < 100 && this.xp >= this.xpNext) {
+       this.xp -= this.xpNext;
+--- before/js/portal.js
++++ after/js/portal.js
+@@ -42,9 +42,9 @@
+   };
+   const paused = (key) => {
+     try { return !!game()?.scene?.isPaused(key); } catch (_) { return false; }
+   };
+-  const cinematicActive = () => (active('Game') || paused('Game')) && !!scene('Game')?.finale && !active('End');
++  const cinematicActive = () => (active('Game') || paused('Game')) && !!(scene('Game')?.cinematic || scene('Game')?.finale) && !active('End');
+ 
+   function updateToolbar() {
+     if (!toolbar) return;
+     const mode = active('End') ? 'end' : (active('Game') || paused('Game')) ? 'game'
+@@ -221,8 +221,9 @@
+     }
+   }
+ 
+   function openDialog(title) {
++    if (cinematicActive()) return null;
+     if (!initialized) initDOM();
+     const previousFocus = document.activeElement;
+     const overlay = element('div', 'portal-overlay');
+     const panel = element('section', 'portal-dialog');
+@@ -357,8 +358,9 @@
+     dialog.body.append(actions);
+   }
+ 
+   function openLogin() {
++    if (cinematicActive()) return;
+     const dialog = openDialog(portal.user ? 'Minha conta' : 'Entre na muralha');
+     if (portal.user) { showAccount(dialog); return dialog; }
+     if (!online) refreshSession().then(() => { if (portal.user && dialog.panel.isConnected) showAccount(dialog); }).catch(() => {});
+     dialog.body.append(element('p', 'portal-muted', 'Entrar é opcional. Crie uma conta para registrar suas melhores partidas ou continue como convidado.'));
+@@ -411,8 +413,9 @@
+   }
+ 
+   const number = (value) => new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Number(value) || 0);
+   function openLeaderboard() {
++    if (cinematicActive()) return;
+     const dialog = openDialog('Ranking da muralha');
+     dialog.panel.classList.add('portal-dialog-wide');
+     dialog.body.append(element('p', 'portal-muted', 'Melhor partida de cada conta. Administradores e contas suspensas ficam fora da classificação.'));
+     const switches = element('div', 'portal-switches');
+@@ -481,8 +484,9 @@
+     return dialog;
+   }
+ 
+   function openAdmin() {
++    if (cinematicActive()) return;
+     if (!portal.isAdmin) return;
+     if (window.GameAdmin?.open) window.GameAdmin.open();
+     else portal.notice('O painel de administração ainda não está disponível.');
+   }
+--- before/js/powers.js
++++ after/js/powers.js
+@@ -36,17 +36,23 @@
+   range() { return (this.s.range || 0) * this.player.mods.range; }
+   area(v) { return v * this.player.mods.area; }
+ 
+   update(dt) {
++    if (this.destroyed) return;
+     for (let i = this.pending.length - 1; i >= 0; i--) {
+       const e = this.pending[i]; e.t -= dt;
+       if (e.t <= 0) { this.pending.splice(i, 1); e.fn(); }
+     }
+     this.impl.update(this, dt);
+   }
+-  after(t, fn) { this.pending.push({ t, fn }); }
++  after(t, fn) { if (!this.destroyed) this.pending.push({ t, fn }); }
+   cast() { this.player.pulse = 0.16; }   // pequena "pulsada" no sprite ao atacar
+-  destroy() { if (this.impl.destroy) this.impl.destroy(this); this.pending.length = 0; }
++  destroy() {
++    if (this.destroyed) return;
++    this.destroyed = true;
++    if (this.impl.destroy) this.impl.destroy(this);
++    this.pending.length = 0;
++  }
+ }
+ 
+ // Utilitários de mira
+ function nearestEnemies(scene, x, y, r, n) {
+@@ -76,32 +82,58 @@
+       s.setBlendMode(o.add ? Phaser.BlendModes.ADD : Phaser.BlendModes.NORMAL);
+       s.vx = Math.cos(o.ang) * o.speed; s.vy = Math.sin(o.ang) * o.speed;
+       s.life = o.range / o.speed; s.dmg = o.dmg; s.pierce = o.pierce; s.rad = o.radius;
+       s.explode = o.explode || 0; s.kind = o.kind; s.powerId = o.powerId; s.knock = o.knock || 60;
+-      s.trail = o.trail || null; s.trailTimer = 0;
++      s.trail = o.trail || null; s.trailTimer = 0; s.boltTimer = 0;
++      s.owner = o.owner || null;
++      s.age = 0;
+       s.setDepth(9100);
+       return s;
+     }
+     return null;
+   }
+-  kill(s) { s.live = false; s.setVisible(false).setActive(false); }
++  kill(s) { s.live = false; s.owner = null; s.setVisible(false).setActive(false); }
+   update(dt) {
+     const sc = this.scene;
+     for (const s of this.items) {
+       if (!s.live) continue;
++      if (s.owner && s.owner.destroyed) { this.kill(s); continue; }
++      const oldX = s.x, oldY = s.y;
+       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
++      s.age += dt;
+       if (s.trail) { s.trailTimer -= dt; if (s.trailTimer <= 0) { sc.fx.burst(s.trail, s.x, s.y, 1); s.trailTimer = 0.035; } }
++      if (s.kind === 'plasma') {
++        s.setFrame(Math.floor(s.age * 18) % 4);
++        s.boltTimer -= dt;
++        if (s.boltTimer <= 0) {
++          const speed = Math.hypot(s.vx, s.vy) || 1;
++          sc.fx.bolt(s.x - s.vx / speed * 32, s.y - s.vy / speed * 32, s.x, s.y, 0.1, 0x72f0ff);
++          s.boltTimer = 0.12;
++        }
++      }
+       let done = s.life <= 0;
+       if (!done && sc.world.outside(s.x, s.y)) done = true;
+       if (!done) {
+-        sc.grid.query(s.x, s.y, s.rad, this.tmp);
++        if (s.kind === 'plasma') {
++          // Sweep the segment: fast plasma still hits at the game's largest dt.
++          const travel = Math.hypot(s.x - oldX, s.y - oldY);
++          sc.grid.query((oldX + s.x) / 2, (oldY + s.y) / 2, s.rad + travel / 2, this.tmp);
++          this.tmp.sort((a, b) => Math.hypot(a.x - oldX, a.y - oldY) - Math.hypot(b.x - oldX, b.y - oldY));
++        } else sc.grid.query(s.x, s.y, s.rad, this.tmp);
+         for (let i = 0; i < this.tmp.length; i++) {
+           const e = this.tmp[i];
++          if (!e.alive) continue;
++          if (s.kind === 'plasma') {
++            const dx = s.x - oldX, dy = s.y - oldY, len2 = dx * dx + dy * dy;
++            const along = len2 ? Math.max(0, Math.min(1, ((e.x - oldX) * dx + (e.y - oldY) * dy) / len2)) : 0;
++            if (Math.hypot(e.x - oldX - dx * along, e.y - oldY - dy * along) > s.rad + e.radius) continue;
++          }
+           if (s.hit.indexOf(e.uid) >= 0) continue;
+           s.hit.push(e.uid);
+           if (s.explode) { done = true; break; }
+-          sc.damageEnemy(e, s.dmg, { x: s.x, y: s.y, knock: s.knock, kind: 'proj' });
++          sc.damageEnemy(e, s.dmg, { x: s.x, y: s.y, knock: s.knock, kind: s.kind === 'plasma' ? 'plasma' : 'proj' });
+           sc.fx.burst('spark', s.x, s.y, 3);
++          if (s.kind === 'plasma') sc.fx.ring(e.x, e.y, 3, s.rad * 2.4, 0.18, 0x68efff, 2, 0);
+           s.pierce--;
+           if (s.pierce <= 0) { done = true; break; }
+         }
+       }
+@@ -482,4 +514,186 @@
+       }
+     }
+   },
+ };
++
++// New common weapons own a fixed set of reusable visuals. All transient sparks,
++// rings and bolts use FX's existing shared pools; plasma uses PlayerShots only.
++POWER_IMPL.cyclone = {
++  init(p) {
++    p.state.vortices = Array.from({ length: 6 }, () => ({
++      life: 0, sprite: p.scene.add.image(0, 0, 'fx_cyclone', 0).setOrigin(0.5, 0.8).setDepth(9080).setVisible(false),
++    }));
++  },
++  update(p, dt) {
++    const sc = p.scene, pl = p.player;
++    p.timer -= dt;
++    if (p.timer <= 0) {
++      const target = nearestEnemies(sc, pl.x, pl.y, p.range(), 1)[0];
++      p.timer = target ? p.cd() : 0.12;
++      if (target) {
++        const aim = Math.atan2(target.y - pl.y, target.x - pl.x);
++        let cast = false;
++        for (let n = 0; n < p.s.count; n++) {
++          const v = p.state.vortices.find(v => v.life <= 0);
++          if (!v) break;
++          const a = aim + (n - (p.s.count - 1) / 2) * 0.3;
++          Object.assign(v, { x: pl.x, y: pl.y, vx: Math.cos(a) * p.s.speed, vy: Math.sin(a) * p.s.speed,
++            life: Math.min(p.s.duration, p.range() / p.s.speed), age: 0, tick: 0, fx: 0 });
++          v.sprite.setVisible(true); cast = true;
++        }
++        if (cast) p.cast();
++      }
++    }
++    for (const v of p.state.vortices) {
++      if (v.life <= 0) continue;
++      v.life -= dt;
++      if (v.life <= 0) { v.sprite.setVisible(false); continue; }
++      v.age += dt; v.tick -= dt; v.fx -= dt;
++      v.x += v.vx * dt; v.y += v.vy * dt;
++      const radius = p.area(p.s.radius), pulse = 1 + Math.sin(v.age * 15) * 0.06;
++      v.sprite.setPosition(v.x, v.y).setFrame(Math.floor(v.age * 16) % 4)
++        .setDisplaySize(radius * 2.5 * pulse, radius * 2.9).setAlpha(Math.min(0.9, v.life * 3));
++      const enemies = sc.queryEnemies(v.x, v.y, radius, sc.tmpB).slice();
++      for (const e of enemies) {
++        if (!e.alive) continue;
++        if (!e.isBoss && !e.isMiniBoss) {
++          const dx = v.x - e.x, dy = v.y - e.y, distance = Math.hypot(dx, dy) || 1;
++          const pull = Math.min(distance, p.s.pull * dt * (e.def?.kb ?? 1));
++          e.x += dx / distance * pull; e.y += dy / distance * pull;
++        }
++        if (v.tick <= 0) sc.damageEnemy(e, p.dmg(), { x: v.x, y: v.y, knock: 0, kind: 'cyclone' });
++      }
++      if (v.tick <= 0) v.tick = p.s.hitCd;
++      if (v.fx <= 0) {
++        sc.fx.ring(v.x, v.y, radius * 0.25, radius, 0.24, 0xa9dfd2, 2, 0);
++        sc.fx.burst('spark', v.x - v.vx * 0.1, v.y - v.vy * 0.1, 1);
++        v.fx = 0.24;
++      }
++    }
++  },
++  destroy(p) { for (const v of p.state.vortices) { v.life = 0; v.sprite.destroy(); } },
++};
++
++POWER_IMPL.radiant_beam = {
++  init(p) {
++    p.state.life = 0;
++    p.state.sprite = p.scene.add.image(0, 0, 'fx_radiant_beam', 0).setOrigin(0, 0.5)
++      .setDepth(9090).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
++  },
++  update(p, dt) {
++    const sc = p.scene, pl = p.player, st = p.state;
++    p.timer -= dt;
++    if (p.timer <= 0 && st.life <= 0) {
++      const target = nearestEnemies(sc, pl.x, pl.y, p.range(), 1)[0];
++      if (!target) { p.timer = 0.12; return; }
++      st.angle = Math.atan2(target.y - (pl.y - 6), target.x - pl.x);
++      st.life = p.s.duration; st.age = 0; st.tick = 0; st.fx = 0;
++      p.timer = p.cd(); p.cast(); st.sprite.setVisible(true);
++      sc.fx.ring(pl.x, pl.y - 6, 4, p.area(p.s.width), 0.24, 0xffdb7d, 2, 0);
++    }
++    if (st.life <= 0) return;
++    st.life -= dt;
++    if (st.life <= 0) { st.sprite.setVisible(false); return; }
++    st.age += dt; st.tick -= dt; st.fx -= dt;
++    const x = pl.x, y = pl.y - 6, length = p.range(), width = p.area(p.s.width);
++    const dx = Math.cos(st.angle), dy = Math.sin(st.angle);
++    st.sprite.setPosition(x, y).setRotation(st.angle).setFrame(Math.floor(st.age * 20) % 4)
++      .setDisplaySize(length, width * (1 + Math.sin(st.age * 32) * 0.08)).setAlpha(Math.min(0.88, st.life * 6));
++    if (st.tick <= 0) {
++      const targets = sc.queryEnemies(x + dx * length / 2, y + dy * length / 2, length / 2 + width, sc.tmpB).slice();
++      for (const e of targets) {
++        const ex = e.x - x, ey = e.y - y, along = ex * dx + ey * dy;
++        if (!e.alive || along < -e.radius || along > length + e.radius || Math.abs(ex * dy - ey * dx) > width / 2 + e.radius) continue;
++        sc.damageEnemy(e, p.dmg(), { x, y, knock: 12, kind: 'radiant_beam' });
++        sc.fx.burst('spark', e.x, e.y, 1);
++      }
++      st.tick = p.s.hitCd;
++    }
++    if (st.fx <= 0) {
++      sc.fx.bolt(x, y, x + dx * length, y + dy * length, 0.13, 0xffe6a1);
++      st.fx = 0.2;
++    }
++  },
++  destroy(p) { p.state.life = 0; p.state.sprite.destroy(); },
++};
++
++POWER_IMPL.plasma = {
++  update(p, dt) {
++    p.timer -= dt;
++    if (p.timer > 0) return;
++    const sc = p.scene, pl = p.player;
++    const target = nearestEnemies(sc, pl.x, pl.y, p.range(), 1)[0];
++    if (!target) { p.timer = 0.12; return; }
++    p.timer = p.cd();
++    const angle = Math.atan2(target.y - (pl.y - 6), target.x - pl.x);
++    let fired = false;
++    for (let n = 0; n < p.s.count; n++) {
++      const shot = sc.pShots.fire({ tex: 'p_plasma', x: pl.x, y: pl.y - 6,
++        ang: angle + (n - (p.s.count - 1) / 2) * p.s.spread, speed: p.s.speed,
++        range: p.range(), radius: p.area(p.s.radius), dmg: p.dmg(), pierce: p.s.pierce,
++        scale: p.area(p.s.radius) / 10, kind: 'plasma', powerId: 'plasma', owner: p,
++        add: true, trail: 'spark', knock: 65 });
++      if (!shot) break;
++      fired = true;
++    }
++    if (fired) p.cast();
++  },
++  destroy(p) { for (const s of p.scene.pShots.items) if (s.live && s.owner === p) p.scene.pShots.kill(s); },
++};
++
++POWER_IMPL.meteor = {
++  init(p) {
++    p.state.meteors = Array.from({ length: 8 }, () => ({ life: 0,
++      mark: p.scene.add.image(0, 0, 'fx_meteor_mark', 0).setDepth(6).setAlpha(0.75).setVisible(false),
++      rock: p.scene.add.image(0, 0, 'p_meteor').setDepth(9130).setVisible(false),
++    }));
++  },
++  update(p, dt) {
++    const sc = p.scene, pl = p.player;
++    p.timer -= dt;
++    if (p.timer <= 0) {
++      const targets = nearestEnemies(sc, pl.x, pl.y, p.range(), p.s.count);
++      p.timer = targets.length ? p.cd() : 0.15;
++      let cast = false;
++      for (let n = 0; targets.length && n < p.s.count; n++) {
++        const m = p.state.meteors.find(m => m.life <= 0);
++        if (!m) break;
++        const target = targets[n % targets.length];
++        // Never retain a pooled enemy object across the warning delay.
++        const angle = n * 2.39996, offset = n >= targets.length ? p.area(p.s.radius) * 0.55 : 0;
++        Object.assign(m, { x: target.x + Math.cos(angle) * offset, y: target.y + Math.sin(angle) * offset,
++          life: p.s.warning + n * 0.12, age: 0, trail: 0, radius: p.area(p.s.radius), damage: p.dmg() });
++        m.mark.setPosition(m.x, m.y).setDisplaySize(m.radius * 2, m.radius * 2).setVisible(true);
++        m.rock.setVisible(false); cast = true;
++      }
++      if (cast) p.cast();
++    }
++    for (const m of p.state.meteors) {
++      if (m.life <= 0) continue;
++      m.life -= dt; m.age += dt; m.trail -= dt;
++      if (m.life <= 0) {
++        m.mark.setVisible(false); m.rock.setVisible(false);
++        for (const e of sc.queryEnemies(m.x, m.y, m.radius, sc.tmpB).slice()) {
++          if (e.alive) sc.damageEnemy(e, m.damage, { x: m.x, y: m.y, knock: 175, kind: 'meteor' });
++        }
++        sc.fx.burst('fire', m.x, m.y, 10);
++        sc.fx.embers(m.x, m.y, 8);
++        sc.fx.ring(m.x, m.y, m.radius * 0.12, m.radius * 1.1, 0.4, 0xffa14c, 4, 0.08);
++        sc.fx.ring(m.x, m.y, 4, m.radius * 0.7, 0.22, 0xffedac, 2, 0);
++        sc.cameras.main.shake(85, 0.002);
++        continue;
++      }
++      m.mark.setFrame(Math.floor(m.age * 10) % 4).setAlpha(0.45 + Math.sin(m.age * 17) * 0.14);
++      if (m.life < 0.34) {
++        const fall = m.life / 0.34;
++        m.rock.setVisible(true).setPosition(m.x - fall * 105, m.y - fall * 260 - 18)
++          .setScale(1 + (1 - fall) * 0.2);
++        if (m.trail <= 0) {
++          sc.fx.burst('fire', m.rock.x - 6, m.rock.y - 12, 2);
++          sc.fx.embers(m.rock.x, m.rock.y, 1); m.trail = 0.06;
++        }
++      }
++    }
++  },
++  destroy(p) { for (const m of p.state.meteors) { m.life = 0; m.mark.destroy(); m.rock.destroy(); } },
++};
+--- before/js/progression.js
++++ after/js/progression.js
+@@ -86,13 +86,17 @@
+   destroy() { for (const c of this.chests) c.sprite.destroy(); this.chests.length = 0; }
+ }
+ 
+ function drawProgressionAssets(scene) {
+-  const colors = { axes: '#aebbd0', frost: '#8eeaff', poison: '#8bcc60', soulblade: '#bdf8e0', tempest: '#a4cfff', inferno: '#ff8845', reaper_axes: '#e2bae8', blizzard: '#c3f5ff', miasma: '#b5db67', celestial_ring: '#ffdd81', singularity: '#c393ee', smoke_dash: '#aab6c9' };
++  const colors = { axes: '#aebbd0', frost: '#8eeaff', poison: '#8bcc60', soulblade: '#bdf8e0', tempest: '#a4cfff', inferno: '#ff8845', reaper_axes: '#e2bae8', blizzard: '#c3f5ff', miasma: '#b5db67', celestial_ring: '#ffdd81', singularity: '#c393ee', smoke_dash: '#aab6c9', cyclone: '#b9ead9', radiant_beam: '#ffe4a0', plasma: '#5aeaff', meteor: '#ff9a43' };
+   for (const [id, color] of Object.entries(colors)) {
+     SPR.make(scene, 'i_' + id, 16, 16, 1, 3, P => {
+       P.r(1, 1, 14, 14, '#171323'); P.r(2, 2, 12, 1, '#4b3f61');
+-      if (id.includes('axes')) { P.line(5, 13, 10, 3, '#8b6849', 2); P.r(5, 3, 7, 4, color); P.r(4, 4, 2, 4, color); P.r(10, 3, 3, 6, color); }
++      if (id === 'cyclone') { P.r(3, 4, 10, 2, color); P.r(4, 7, 8, 2, '#6caeab'); P.r(6, 10, 5, 2, color); P.r(7, 12, 2, 2, '#effff6'); P.r(4, 4, 5, 1, '#f2fff5'); }
++      else if (id === 'radiant_beam') { P.line(3, 12, 12, 3, '#b98239', 5); P.line(3, 12, 12, 3, color, 3); P.line(4, 12, 12, 4, '#ffffff', 1); P.r(3, 8, 1, 4, color); P.r(10, 12, 3, 1, color); }
++      else if (id === 'plasma') { P.line(3, 12, 9, 6, '#277fbb', 3); P.disc(9, 7, 5, '#196ca0'); P.disc(9, 7, 4, color); P.disc(9, 7, 2, '#f4ffff'); P.p(13, 11, color); P.p(3, 5, color); }
++      else if (id === 'meteor') { P.line(3, 3, 10, 10, '#d6542d', 4); P.line(6, 3, 11, 9, '#ffc66a', 2); P.disc(10, 10, 4, color); P.disc(10, 10, 2, '#5b3943'); P.p(12, 9, '#ffe2a2'); }
++      else if (id.includes('axes')) { P.line(5, 13, 10, 3, '#8b6849', 2); P.r(5, 3, 7, 4, color); P.r(4, 4, 2, 4, color); P.r(10, 3, 3, 6, color); }
+       else if (id === 'frost' || id === 'blizzard') { P.line(8, 3, 8, 13, color); P.line(3, 5, 12, 11, color); P.line(3, 11, 12, 5, color); P.r(7, 6, 3, 4, '#f1ffff'); }
+       else if (id === 'poison' || id === 'miasma' || id === 'smoke_dash') { P.disc(6, 8, 3, color); P.disc(10, 7, 3, color); P.disc(9, 11, 3, color); P.p(5, 7, '#f0ffd6'); }
+       else if (id === 'soulblade') { P.line(5, 12, 11, 3, color, 2); P.line(4, 9, 9, 12, '#b9904a'); }
+       else if (id === 'tempest') { P.line(10, 3, 5, 8, color, 2); P.line(5, 8, 10, 8, color, 2); P.line(10, 8, 6, 13, color, 2); }
+@@ -106,8 +110,60 @@
+       P.disc(12, 12, 11, '#251b30'); P.disc(12, 12, 9, color); P.disc(12, 12, 6, '#302339');
+       for (let i = 0; i < 6; i++) P.disc(12 + Math.round(Math.cos(i) * 8), 12 + Math.round(Math.sin(i) * 8), 2, color);
+     });
+   }
++  SPR.make(scene, 'fx_cyclone', 48, 56, 4, 2, (P, f) => {
++    // A tapered silhouette and shifting crescent bands read as wind, not an orb.
++    const phases = [0, 3, 0, -3];
++    for (let band = 0; band < 6; band++) {
++      const y = 6 + band * 7, half = 21 - band * 3, shift = phases[(f + band) % 4];
++      P.r(24 - half + shift, y + 2, half * 2, 3, '#315854');
++      P.r(24 - half + shift + 1, y, half * 2 - 2, 2, '#72aaa0');
++      P.r(24 - half + shift + 3, y, half + 1, 2, '#d8f5df');
++      P.r(24 + half + shift - 3, y + 2, 3, 2, '#9cd7c5');
++    }
++    P.r(21, 47, 5, 3, '#dff5d7');
++    const leafX = [4, 35, 30, 8][f], leafY = [20, 12, 36, 31][f];
++    P.line(leafX, leafY, leafX + 5, leafY - 2, '#b3b276', 2);
++    P.r(8 + f * 7, 51, 5, 1, '#72aaa0');
++  });
++  SPR.make(scene, 'fx_radiant_beam', 80, 18, 4, 1, (P, f) => {
++    P.r(1, 2, 78, 14, '#6d4e20'); P.r(0, 4, 80, 10, '#b78f42');
++    P.r(0, 6, 80, 6, '#ffe6a1'); P.r(0, 8, 80, 2, '#ffffff');
++    for (let n = 0; n < 5; n++) {
++      const x = (n * 17 + f * 6) % 77;
++      P.line(x, 2, x + 5, 7, '#fff0ba'); P.line(x, 15, x + 5, 10, '#fff0ba');
++    }
++    P.r(1, 4, 2, 10, '#ffffff'); P.r(77, 5, 2, 8, '#fff5d0');
++  });
++  SPR.make(scene, 'p_plasma', 24, 18, 4, 2, (P, f) => {
++    P.line(0, 8, 11, 8, '#195a97', 3);
++    P.line(2, 6 + f % 2, 8, 10 - f % 2, '#58cdec');
++    P.disc(13, 9, 7, '#174b80'); P.disc(13, 9, 6, '#279bcc');
++    P.disc(13, 9, 4, '#6ff5ff'); P.disc(14, 8, 2, '#f1ffff');
++    const a = f * Math.PI / 2;
++    P.line(13 + Math.cos(a) * 4, 9 + Math.sin(a) * 4, 13 + Math.cos(a + .6) * 8, 9 + Math.sin(a + .6) * 8, '#caffff');
++    P.p(2 + f, 13 - f, '#88efff');
++  });
++  SPR.make(scene, 'p_meteor', 28, 40, 1, 2, P => {
++    P.line(4, 0, 18, 28, '#9b3428', 7); P.line(10, 2, 22, 29, '#f77936', 5);
++    P.line(13, 9, 22, 29, '#ffc56a', 3); P.line(2, 12, 13, 29, '#f77936', 3);
++    P.disc(18, 30, 9, '#b44d30'); P.disc(18, 30, 7, '#ffbc55');
++    P.disc(19, 31, 5, '#61404a'); P.r(15, 27, 5, 3, '#977168');
++    P.line(16, 31, 20, 34, '#ef783d', 2); P.p(22, 28, '#ffedb5');
++  });
++  SPR.make(scene, 'fx_meteor_mark', 48, 48, 4, 2, (P, f) => {
++    for (let n = 0; n < 36; n++) {
++      const a = n * Math.PI / 18;
++      const x = Math.round(24 + Math.cos(a) * 21), y = Math.round(24 + Math.sin(a) * 21);
++      P.r(x, y, 2, 2, n % 3 === f % 3 ? '#ffe1a4' : '#b77535');
++    }
++    for (let n = 0; n < 4; n++) {
++      const a = n * Math.PI / 2 + f * .08;
++      P.line(24 + Math.cos(a) * 12, 24 + Math.sin(a) * 12, 24 + Math.cos(a) * 17, 24 + Math.sin(a) * 17, '#ffe1a4', 2);
++    }
++    P.line(20, 24, 28, 24, '#e8b16b'); P.line(24, 20, 24, 28, '#e8b16b');
++  });
+   SPR.make(scene, 'progression_chest', 20, 16, 1, 2, P => {
+     P.r(2, 5, 16, 10, '#1c1426'); P.r(3, 6, 14, 8, '#65435e'); P.r(4, 3, 12, 4, '#9c6c6b');
+     P.r(3, 7, 14, 2, '#d6ac61'); P.r(5, 4, 2, 10, '#bd9857'); P.r(13, 4, 2, 10, '#bd9857');
+     P.r(8, 7, 4, 5, '#edce83'); P.r(9, 8, 2, 2, '#35263f');
+--- before/js/scenes.js
++++ after/js/scenes.js
+@@ -110,58 +110,60 @@
+     const W = CONFIG.width, H = CONFIG.height;
+     this.cameras.main.fadeIn(250);
+     menuBackdrop(this);
+     this.add.image(W / 2, H / 2, 'vignette').setDepth(1);
+-    mkText(this, W / 2, 56, 'ESCOLHA SEU HERÓI', 40, '#e6d6a8', { strokeThickness: 6 }).setOrigin(0.5).setDepth(10);
++    mkText(this, W / 2, 92, 'ESCOLHA SEU HERÓI', 30, '#e6d6a8', { strokeThickness: 5 }).setOrigin(0.5).setDepth(10);
+ 
+     this.ids = Object.keys(CHARACTERS);
+     this.sel = Math.max(0, this.ids.indexOf(this.registry.get('lastChar') || ''));
+     this.cards = [];
+-    const cy = 385, CW = 360, CH = 520;
++    const cy = 385, CW = 284, CH = 520, gap = 26;
+ 
+     this.ids.forEach((id, i) => {
+-      const c = CHARACTERS[id], x = 240 + i * 400;
++      const c = CHARACTERS[id], x = W / 2 + (i - (this.ids.length - 1) / 2) * (CW + gap);
+       const o = [];
+       const panel = this.add.rectangle(x, cy, CW, CH, 0x15111d, 0.94).setStrokeStyle(4, 0x4a3c5c).setDepth(5).setInteractive({ useHandCursor: true });
+       o.push(panel);
+       const glow = this.add.image(x, cy - 170, 'glow').setTint(c.color).setBlendMode(Phaser.BlendModes.ADD).setScale(2.2).setAlpha(0.35).setDepth(5);
+       const spr = this.add.sprite(x, cy - 170, 'c_' + id, 0).setScale(3).setDepth(6);
+       spr.play('walk_' + id);
+       o.push(glow, spr);
+-      o.push(mkText(this, x, cy - 76, c.name.toUpperCase(), 28, '#ffffff').setOrigin(0.5).setDepth(6));
+-      o.push(mkText(this, x, cy - 46, c.title, 14, '#e0b040').setOrigin(0.5).setDepth(6));
+-      o.push(mkText(this, x, cy - 24, c.desc, 15, '#bdb8cc', { wordWrap: { width: 316 }, align: 'center', strokeThickness: 2 }).setOrigin(0.5, 0).setDepth(6));
++      o.push(mkText(this, x, cy - 76, c.name.toUpperCase(), 25, '#ffffff').setOrigin(0.5).setDepth(6));
++      o.push(mkText(this, x, cy - 46, c.title, 12, '#e0b040').setOrigin(0.5).setDepth(6));
++      o.push(mkText(this, x, cy - 24, c.desc, 14, '#bdb8cc', { wordWrap: { width: 244 }, align: 'center', strokeThickness: 2 }).setOrigin(0.5, 0).setDepth(6));
++      o.push(mkText(this, x, cy + 72, `${c.hp} HP · ${c.speed} velocidade`, 13, '#d5e4e8', {strokeThickness:2}).setOrigin(0.5).setDepth(6));
+       // poder inicial
+       const pw = POWERS[c.startPower];
+-      o.push(this.add.rectangle(x, cy + 112, 316, 54, 0x0e0b14, 1).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
+-      o.push(this.add.image(x - 130, cy + 112, 'i_' + pw.icon).setScale(0.85).setDepth(7));
+-      o.push(mkText(this, x - 98, cy + 98, 'Poder inicial', 12, '#8a7fa0', { strokeThickness: 2 }).setDepth(7));
+-      o.push(mkText(this, x - 98, cy + 114, pw.name, 18, '#ffe9a8', { strokeThickness: 3 }).setDepth(7));
++      o.push(this.add.rectangle(x, cy + 112, 252, 54, 0x0e0b14, 1).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
++      o.push(this.add.image(x - 104, cy + 112, 'i_' + pw.icon).setScale(0.72).setDepth(7));
++      o.push(mkText(this, x - 78, cy + 98, 'Poder inicial', 11, '#8a7fa0', { strokeThickness: 2 }).setDepth(7));
++      o.push(mkText(this, x - 78, cy + 114, pw.name, 16, '#ffe9a8', { strokeThickness: 3 }).setDepth(7));
+       // atributos
+       let k = 0;
+       for (const label in c.stats) {
+         const yy = cy + 170 + k * 26;
+-        o.push(mkText(this, x - 150, yy - 8, label, 14, '#cfc8dc', { strokeThickness: 2 }).setDepth(6));
+-        o.push(this.add.rectangle(x + 50, yy, 190, 12, 0x0a0810).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
++        o.push(mkText(this, x - 122, yy - 8, label, 13, '#cfc8dc', { strokeThickness: 2 }).setDepth(6));
++        o.push(this.add.rectangle(x + 62, yy, 120, 12, 0x0a0810).setStrokeStyle(2, 0x3a2f4c).setDepth(6));
+         const v = c.stats[label];
+-        o.push(this.add.rectangle(x - 45, yy, 186 * v, 8, c.color).setOrigin(0, 0.5).setDepth(7));
++        o.push(this.add.rectangle(x + 4, yy, 116 * v, 8, c.color).setOrigin(0, 0.5).setDepth(7));
+         k++;
+       }
+       panel.on('pointerover', () => this.select(i));
+       panel.on('pointerdown', () => { this.select(i); this.confirm(); });
+       this.cards.push({ panel, glow, spr, objs: o });
+     });
+ 
+-    mkText(this, W / 2, 678, '← →  escolher     ENTER  jogar     1 · 2 · 3  atalhos     ESC  voltar', 17, '#a89cc0').setOrigin(0.5).setDepth(10);
++    mkText(this, W / 2, 678, '← →  escolher     ENTER  jogar     1 · 2 · 3 · 4  atalhos     ESC  voltar', 17, '#a89cc0').setOrigin(0.5).setDepth(10);
+ 
+     const K = this.input.keyboard;
+-    K.on('keydown-LEFT', () => this.select((this.sel + 2) % 3));
+-    K.on('keydown-A', () => this.select((this.sel + 2) % 3));
+-    K.on('keydown-RIGHT', () => this.select((this.sel + 1) % 3));
+-    K.on('keydown-D', () => this.select((this.sel + 1) % 3));
++    K.on('keydown-LEFT', () => this.select((this.sel + this.ids.length - 1) % this.ids.length));
++    K.on('keydown-A', () => this.select((this.sel + this.ids.length - 1) % this.ids.length));
++    K.on('keydown-RIGHT', () => this.select((this.sel + 1) % this.ids.length));
++    K.on('keydown-D', () => this.select((this.sel + 1) % this.ids.length));
+     K.on('keydown-ONE', () => { this.select(0); this.confirm(); });
+     K.on('keydown-TWO', () => { this.select(1); this.confirm(); });
+     K.on('keydown-THREE', () => { this.select(2); this.confirm(); });
++    K.on('keydown-FOUR', () => { this.select(3); this.confirm(); });
+     K.on('keydown-ENTER', () => this.confirm());
+     K.on('keydown-SPACE', () => this.confirm());
+     K.on('keydown-ESC', () => this.back());
+     this.going = false;
+--- before/js/sprites.js
++++ after/js/sprites.js
+@@ -705,8 +705,9 @@
+   });
+   SPR.make(scene, 'c_vanguard', 24, 24, 4, 2, (P, f) => drawRefinedHero(P, f, 'vanguard'));
+   SPR.make(scene, 'c_ranger', 24, 24, 4, 2, (P, f) => drawRefinedHero(P, f, 'ranger'));
+   SPR.make(scene, 'c_mage', 24, 24, 4, 2, (P, f) => drawRefinedHero(P, f, 'mage'));
++  SPR.make(scene, 'c_channeler', 24, 24, 4, 2, drawChanneler);
+   SPR.make(scene, 'boss', 32, 32, 4, 4, drawRefinedBoss);
+   for (const id of Object.keys(ENEMY_ART)) {
+     const a = ENEMY_ART[id];
+     if (a.custom) SPR.make(scene, 'e_' + id, a.w, a.h, a.frames || 4, a.k, a.fn);
+--- before/js/ui.js
++++ after/js/ui.js
+@@ -33,9 +33,9 @@
+     this.txtDash = mkText(this, 20, H - 47, '', 14, '#c6dae8').setDepth(12);
+     this.miniTexts = [0, 1].map(i => mkText(this, W / 2, 566 + i * 44, '', 15, '#d7b6ed').setOrigin(0.5).setDepth(12).setVisible(false));
+     if (this.sys.game.device.input.touch) {
+       this.dashButton = this.add.circle(W - 76, H - 170, 42, 0x21172f, 0.85).setStrokeStyle(3, 0xafa0d0).setDepth(30).setInteractive();
+-      this.dashButton.on('pointerdown', (pointer, x, y, event) => { if (!this.paused && !this.lvlActive && !this.G.ended) this.G.requestDash = true; event.stopPropagation(); });
++      this.dashButton.on('pointerdown', (pointer, x, y, event) => { if (!this.G.cinematic && !this.paused && !this.lvlActive && !this.G.ended) this.G.requestDash = true; event.stopPropagation(); });
+       mkText(this, W - 76, H - 170, 'DASH', 17, '#ddd2ef').setOrigin(0.5).setDepth(31);
+     }
+     this.txtDbg = this.G.debug ? mkText(this, W - 16, 130, '', 13, '#9aff9a').setOrigin(1, 0).setDepth(12) : null;
+ 
+@@ -127,9 +127,9 @@
+     const pk = Object.keys(p.passives);
+     for (let i = 0; i < pk.length; i++) { const x = 16 + i * 40; g.fillStyle(0x0e0b14, 0.9); g.fillRect(x, 128, 36, 36); g.lineStyle(2, 0x3a5a44, 1); g.strokeRect(x, 128, 36, 36); }
+ 
+     const nearGate = !!G.nearCastleGate();
+-    const gateUi = nearGate && !this.lvlActive && !this.paused && !G.ended;
++    const gateUi = nearGate && !G.cinematic && !this.lvlActive && !this.paused && !G.ended;
+     this.txtGate.setVisible(gateUi);
+     if (gateUi) this.setText(this.txtGate, G.transitioning ? 'Entrando no castelo…' : G.stageCleared ? 'Passagem liberada • E / ENTER ou toque' : 'Portão selado • derrote o guardião da floresta');
+     const canEnter = gateUi && G.stageCleared && !G.transitioning;
+     this.gateButton.objs.forEach(o => o.setVisible(canEnter));
+@@ -227,9 +227,9 @@
+     });
+   }
+ 
+   choose(i) {
+-    if (GamePortal.dialogOpen || !this.lvlActive || this.time.now - this.lvlOpenAt < 350) return;   // evita clique acidental
++    if (this.G.cinematic || GamePortal.dialogOpen || !this.lvlActive || this.time.now - this.lvlOpenAt < 350) return;   // evita clique acidental
+     const c = this.lvlChoices[i];
+     if (!c) return;
+     this.lvlActive = false;
+     Sfx.play('ui');
+@@ -241,9 +241,9 @@
+ 
+   // ---------------------------------------------------------- pausa
+   togglePause() {
+     const G = this.G;
+-    if (GamePortal.dialogOpen || G.transitioning || G.ended || this.lvlActive || !G.player) return;
++    if (G.cinematic || GamePortal.dialogOpen || G.transitioning || G.ended || this.lvlActive || !G.player) return;
+     const W = CONFIG.width, H = CONFIG.height, O = this.pauseObjs;
+     if (!this.paused) {
+       this.paused = true;
+       G.scene.pause();
+--- before/server.py
++++ after/server.py
+@@ -38,13 +38,14 @@
+     'maxEnemies': (1, 240, True),
+ }
+ DIFFICULTY_SCORES = {'easy': 0.75, 'medium': 1.0, 'hard': 1.5, 'hardcore': 2.5}
+ STAGES = frozenset(('forest', 'castle'))
+-HEROES = frozenset(('vanguard', 'ranger', 'mage'))
++HEROES = frozenset(('vanguard', 'ranger', 'mage', 'channeler'))
+ POWERS = frozenset(('slash', 'arrows', 'arcane', 'blades', 'lightning',
+                     'fireball', 'orbs', 'pierce', 'burst', 'axes', 'frost', 'poison',
+                     'soulblade', 'tempest', 'inferno', 'reaper_axes', 'blizzard', 'miasma',
+-                    'celestial_ring', 'singularity'))
++                    'celestial_ring', 'singularity',
++                    'cyclone', 'radiant_beam', 'plasma', 'meteor'))
+ ENEMIES = frozenset((
+     'skel_warrior', 'bat', 'skel_archer', 'spider', 'skel_shield', 'cultist',
+     'skel_mage', 'skel_fighter', 'dark_knight', 'cultist_thrower', 'giant_bat',
+     'crossbowman', 'specter', 'giant_spider', 'floating_skull', 'mounted_knight',
+@@ -53,8 +54,9 @@
+     'hell_charger', 'storm_warden', 'crypt_lord',
+     'forest_wolf', 'forest_spider', 'forest_wisp', 'forest_bandit', 'forest_rootling',
+     'forest_moth', 'forest_druid', 'forest_stalker', 'forest_matriarch', 'forest_huntsman',
+     'forest_boar', 'forest_snake', 'forest_raven', 'forest_sentinel',
++    'forest_witch', 'forest_storm_mage',
+ ))
+ EMPTY_COMMANDS = frozenset(('heal', 'boss', 'clear', 'maxpowers', 'killboss'))
+ STAT_LIMITS = {
+     'hp': (0, 1_000_000, False), 'maxHp': (1, 1_000_000, False),
+--- before/tests/ambient_fx_checks.cjs
++++ after/tests/ambient_fx_checks.cjs
+@@ -0,0 +1,30 @@
++// Exercita o agendamento real; o emissor é o limite externo observado pelo teste.
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++const context = vm.createContext({ Math });
++vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/fx.js'), 'utf8') + '\nthis.FX = FX;', context);
++const emissions = [];
++const fx = Object.create(context.FX.prototype);
++fx.scene = {
++  cameras: { main: { worldView: { x: 0, y: 0, right: 1280, bottom: 720 } } },
++  world: { fireSources: [{ x: 100, y: 200, rate: 4 }, { x: 5000, y: 5000, rate: 4 }] },
++};
++fx.embers = (x, y, count) => emissions.push({ x, y, count });
++for (let i = 0; i < 4; i++) fx.updateFireSources(.25);
++assert.equal(emissions.reduce((sum, item) => sum + item.count, 0), 4,
++  'Uma fonte visível deve emitir suas brasas ao longo do tempo');
++assert(emissions.every(item => item.x === 100 && item.y === 200),
++  'Fontes fora da câmera não devem emitir');
++emissions.length = 0;
++fx.scene.cameras.main.worldView = { x: 4500, y: 4500, right: 5780, bottom: 5220 };
++fx.updateFireSources(.25);
++assert.equal(emissions.reduce((sum, item) => sum + item.count, 0), 1,
++  'Uma fonte que entra na câmera não deve compensar o tempo distante');
++emissions.length = 0;
++fx.scene.world.fireSources = Array.from({ length: 300 }, (_, i) => ({ x: 4700 + i % 20, y: 4800, rate: 20 }));
++fx.updateFireSources(10);
++assert(emissions.reduce((sum, item) => sum + item.count, 0) <= 12,
++  'Salto no relógio e fontes numerosas devem respeitar um orçamento por atualização');
++console.log('OK: brasas visíveis, sem emissão distante/acúmulo e orçamento limitado');
+--- before/tests/browser_accounts.cjs
++++ after/tests/browser_accounts.cjs
+@@ -19,9 +19,9 @@
+   await page.keyboard.press('Enter');
+   await readyGame(page);
+ }
+ async function auth(page, username, password, register = false) {
+-  await page.evaluate(() => GamePortal.openLogin());
++  await page.evaluate(() => { GamePortal.openLogin(); });
+   const dialog = page.getByRole('dialog');
+   if (register) await dialog.locator('.portal-switches button').nth(1).click();
+   await dialog.getByLabel('Nome de usuário', { exact: true }).fill(username);
+   await dialog.getByLabel('Senha', { exact: true }).fill(password);
+@@ -46,9 +46,9 @@
+     assert(await firstDialog.getByLabel('Nome de usuário', { exact: true }).getAttribute('maxlength') === '20', 'Limite de nome ausente');
+     await firstDialog.getByRole('button', { name: 'Continuar como convidado' }).click();
+     await playFromMenu(player);
+     assert(await player.evaluate(() => !GamePortal.user && GAME.scene.getScene('Game').gameReady), 'Visitante não pôde jogar');
+-    await player.evaluate(() => GamePortal.openLeaderboard());
++    await player.evaluate(() => { GamePortal.openLeaderboard(); });
+     await player.getByRole('dialog').waitFor();
+     await player.waitForFunction(() => GAME.scene.isPaused('Game'));
+     await closeDialog(player);
+     await player.waitForFunction(() => GAME.scene.isActive('Game'));
+@@ -73,9 +73,9 @@
+     assert(run.damage === 14 && run.kills === 1 && run.ranked, 'Dano efetivo/partida classificada incorretos');
+     await player.waitForFunction(() => GAME.scene.isActive('End'));
+     const saved = await player.evaluate(() => GAME.scene.getScene('Game').runSubmission);
+     assert(saved.saved && saved.ranked, 'Resultado real não foi salvo');
+-    await player.evaluate(() => GamePortal.openLeaderboard());
++    await player.evaluate(() => { GamePortal.openLeaderboard(); });
+     await player.getByRole('dialog').getByText(playerName, { exact: true }).waitFor();
+     for (const tab of ['Abates', 'Dano', 'Pontos']) {
+       await player.getByRole('dialog').getByRole('button', { name: tab, exact: true }).click();
+       await player.getByRole('dialog').getByText(playerName, { exact: true }).waitFor();
+@@ -137,9 +137,9 @@
+     await player.evaluate(() => { GamePortal.settings.healthDropChance = 0.05; GAME.scene.getScene('End').again(); });
+     await readyGame(player);
+     assert(await player.evaluate(() => CONFIG.healthDropChance === 0.125 && GAME.scene.getScene('Game').isPractice), 'Início usou cache em vez das regras oficiais');
+     checked('parâmetros oficiais e treino quando as regras globais mudam');
+-    await player.evaluate(() => GamePortal.openLogin());
++    await player.evaluate(() => { GamePortal.openLogin(); });
+     await player.getByRole('button', { name: 'Sair da conta', exact: true }).click();
+     await player.waitForFunction(() => !GamePortal.user);
+     await player.getByRole('dialog').waitFor({ state: 'detached' });
+     checked('logout real com POST JSON');
+--- before/tests/browser_accounts.py
++++ after/tests/browser_accounts.py
+@@ -11,15 +11,17 @@
+ sys.path.insert(0, str(ROOT))
+ from server import create_server
+ 
+ parser = argparse.ArgumentParser(description=__doc__)
++parser.add_argument('--new-content', action='store_true', help='Conferir poderes, herói, criaturas, partículas e cinema da floresta.')
++parser.add_argument('--forest-cinema', action='store_true', help='Conferir cutscene, bloqueio de controles e cancelamento na floresta.')
+ parser.add_argument('--journey-regressions', action='store_true', help='Conferir respostas de perfil atrasadas e cutscene.')
+ parser.add_argument('--journey', action='store_true', help='Conferir fases, portas, checkpoint, perfil e desfecho.')
+ parser.add_argument('--forest', action='store_true', help='Conferir campanha Floresta→Castelo, cenário, encontros e transferência.')
+ parser.add_argument('--expansion', action='store_true', help='Conferir poderes, evoluções, dash, encontros e dificuldades.')
+ parser.add_argument('--controls', action='store_true', help='Conferir teclado e pausa após janelas de conta/ranking.')
+ args = parser.parse_args()
+-script = 'journey_regressions.cjs' if args.journey_regressions else 'browser_journey.cjs' if args.journey else 'browser_forest.cjs' if args.forest else 'browser_expansion.cjs' if args.expansion else 'browser_portal_controls.cjs' if args.controls else 'browser_accounts.cjs'
++script = 'browser_new_content.cjs' if args.new_content else 'forest_cinema_checks.cjs' if args.forest_cinema else 'journey_regressions.cjs' if args.journey_regressions else 'browser_journey.cjs' if args.journey else 'browser_forest.cjs' if args.forest else 'browser_expansion.cjs' if args.expansion else 'browser_portal_controls.cjs' if args.controls else 'browser_accounts.cjs'
+ 
+ with tempfile.TemporaryDirectory(prefix='muralha-browser-') as folder:
+     private = Path(folder) / 'dados'
+     httpd = create_server(root=ROOT, private_dir=private, port=0)
+@@ -28,8 +30,9 @@
+     env = os.environ.copy()
+     env['MURALHA_TEST_URL'] = f'http://127.0.0.1:{httpd.server_port}'
+     env['MURALHA_TEST_CREDENTIALS'] = str(private / 'admin-inicial.json')
+     env['MURALHA_TEST_DATA_DIR'] = str(private)
++    env['MURALHA_PYTHON'] = sys.executable
+     try:
+         result = subprocess.run(['node', str(ROOT / 'tests' / script)], env=env, cwd=ROOT)
+     finally:
+         httpd.shutdown()
+--- before/tests/browser_forest.cjs
++++ after/tests/browser_forest.cjs
+@@ -191,18 +191,18 @@
+         if(frame%20===0)for(const e of g.enemies.pool)if(e.alive&&FOREST_ENEMY_IDS.includes(e.id))seen.add(e.id);
+         if(g.enemies.alive>240||g.hazards.length>41)throw Error('Orçamento excedido na floresta');
+       }
+       delete g.openLevelUp;delete g.openEvolutionChest;g.botInput=null;
+-      if(!g.bossStarted||!(g.boss instanceof ForestBoss)||g.encounters.spawned.filter(Boolean).length!==2||seen.size!==12)throw Error('Encontros ou variedade incompleta na simulação: '+[...seen].join(','));
++      if(!g.bossStarted||!(g.boss instanceof ForestBoss)||g.encounters.spawned.filter(Boolean).length!==2||seen.size!==14)throw Error('Encontros ou variedade incompleta na simulação: '+[...seen].join(','));
+       p.gainXp(1000000);if(p.level!==100)throw Error('Campanha ultrapassa nível suportado');
+       g.pendingLevels=0;
+       return {seconds:g.t,peak,types:seen.size,milliseconds:Math.round(performance.now()-begin)};
+     });
+     console.log(JSON.stringify(stress));
+-    check('15 minutos simulados: doze criaturas, dois minis, chefe próprio e pools limitados');
++    check('15 minutos simulados: catorze criaturas, dois minis, chefe próprio e pools limitados');
+ 
+     // Mesma partida autenticada entre fases; sem esperar quinze minutos em tempo real.
+-    await page.evaluate(() => GamePortal.openLogin());
++    await page.evaluate(() => { GamePortal.openLogin(); });
+     const dialog=page.getByRole('dialog');
+     await dialog.locator('.portal-switches button').nth(1).click();
+     await dialog.getByLabel('Nome de usuário',{exact:true}).fill('TrilhaNoturna');
+     await dialog.getByLabel('Senha',{exact:true}).fill('TrilhaNoturna!2026');
+@@ -210,9 +210,13 @@
+     await page.waitForFunction(() => GamePortal.user?.username==='TrilhaNoturna');
+     await dialog.waitFor({state:'detached'});
+     let starts=0, advances=0;
+     page.on('request',r=>{if(r.url().endsWith('/api/runs/start')) starts++; if(r.url().endsWith('/api/runs/advance')) advances++;});
+-    await page.evaluate(()=>GAME.scene.getScene('Game').scene.restart({char:'mage',stage:'forest'}));
++    await page.evaluate(async()=>{
++      const g=GAME.scene.getScene('Game'),previous=g.initialization;
++      g.scene.restart({char:'mage',stage:'forest'});
++      while(!g.initialization||g.initialization===previous)await new Promise(requestAnimationFrame);
++    });
+     await ready(page,'forest');
+     const runId=await page.evaluate(async()=> (await GAME.scene.getScene('Game').runStart).run_id);
+     assert(runId,'Não iniciou partida autenticada');
+     await page.evaluate(async()=>{
+@@ -225,9 +229,13 @@
+     assert(await page.evaluate(async id=>(await GAME.scene.getScene('Game').runStart).run_id===id,runId),'Passagem criou outra partida');
+     assert(starts===1 && advances===1,'Requisições duplicadas ou novo início na segunda fase');
+     check('passagem autenticada mantém runId, valida servidor e ignora entrada duplicada');
+ 
+-    await page.evaluate(()=>GAME.scene.getScene('Game').scene.restart({char:'mage',stage:'forest'}));
++    await page.evaluate(async()=>{
++      const g=GAME.scene.getScene('Game'),previous=g.initialization;
++      g.scene.restart({char:'mage',stage:'forest'});
++      while(!g.initialization||g.initialization===previous)await new Promise(requestAnimationFrame);
++    });
+     await ready(page,'forest');
+     await page.route('**/api/runs/advance',route=>route.abort());
+     await page.evaluate(async()=>{
+       const g=GAME.scene.getScene('Game');g.spawningEnabled=false;g.t=900;g.stageCleared=true;g.world.openCastleGate();
+--- before/tests/browser_journey.cjs
++++ after/tests/browser_journey.cjs
+@@ -6,9 +6,9 @@
+ if(!base||!process.env.MURALHA_TEST_DATA_DIR)throw Error('Use browser_accounts.py --journey');
+ const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
+ const out='/tmp/muralha-jornada';fs.mkdirSync(out,{recursive:true});
+ const ready=(page,stage)=>page.waitForFunction(stage=>window.GAME?.scene.isActive('Game')&&GAME.scene.getScene('Game').gameReady&&GAME.scene.getScene('Game').stageId===stage,stage);
+-const ageRun=run=>execFileSync('python3',['-c',
++const ageRun=run=>execFileSync(process.env.MURALHA_PYTHON||'python3',['-c',
+   'import sqlite3,sys,time; db=sqlite3.connect(sys.argv[1]); db.execute("UPDATE runs SET started_at=? WHERE id=?",(time.time()-905,sys.argv[2])); db.commit(); db.close()',
+   process.env.MURALHA_TEST_DATA_DIR+'/jogo.sqlite3',run]);
+ async function startMenu(page){
+   await page.goto(base+'/?nointro');
+@@ -20,9 +20,9 @@
+   await page.waitForFunction(()=>GAME.scene.isActive('StageSelect'));
+   await page.waitForFunction(()=>!GAME.scene.getScene('StageSelect').cameras.main.fadeEffect.isRunning);
+ }
+ async function auth(page,name,register){
+-  await page.evaluate(()=>GamePortal.openLogin());
++  await page.evaluate(()=>{ GamePortal.openLogin(); });
+   const dialog=page.getByRole('dialog');
+   if(register)await dialog.locator('.portal-switches button').nth(1).click();
+   await dialog.getByLabel('Nome de usuário',{exact:true}).fill(name);
+   await dialog.getByLabel('Senha',{exact:true}).fill('Jornada!2026');
+@@ -100,18 +100,18 @@
+     await account.goto(base+'/?nointro');
+     await account.getByRole('dialog').getByRole('button',{name:'Continuar como convidado'}).click();
+     await auth(account,'GuardiaoDaPorta',true);
+     assert(!await account.evaluate(()=>GamePortal.canPlayStage('castle')),'Progresso guest contaminou conta nova');
+-    await account.evaluate(()=>GAME.scene.start('Game',{char:'ranger',stage:'forest',difficulty:'medium'}));
++    await account.evaluate(()=>{ GAME.scene.start('Game',{char:'ranger',stage:'forest',difficulty:'medium'}); });
+     await ready(account,'forest');
+     const run=await account.evaluate(async()=>(await GAME.scene.getScene('Game').runStart).run_id);ageRun(run);
+     await account.evaluate(async()=>{
+       const g=GAME.scene.getScene('Game');g.spawningEnabled=false;g.t=900;g.stageCleared=true;g.world.openCastleGate();
+       g.player.x=g.world.gate.x;g.player.y=g.world.gate.y+70;await g.enterCastle();
+     });
+     await ready(account,'castle');await account.reload();
+     await account.waitForFunction(()=>GamePortal.user?.username==='GuardiaoDaPorta'&&GamePortal.canPlayStage('castle'));
+-    await account.evaluate(()=>GAME.scene.start('StageSelect',{char:'ranger'}));
++    await account.evaluate(()=>{ GAME.scene.start('StageSelect',{char:'ranger'}); });
+     await account.waitForFunction(()=>GAME.scene.isActive('StageSelect'));
+     await account.waitForFunction(()=>!GAME.scene.getScene('StageSelect').cameras.main.fadeEffect.isRunning);
+     await account.screenshot({path:out+'/selecao-liberada.png'});
+     await account.keyboard.press('2');await account.waitForFunction(()=>GAME.scene.isActive('Difficulty'));
+@@ -124,9 +124,9 @@
+     await account.waitForFunction(()=>GAME.scene.isActive('End'));
+     const saved=await account.evaluate(()=>GAME.scene.getScene('Game').runSubmission);
+     assert(saved.saved&&saved.ranked,'Estatísticas reais da conta não salvas');
+     await account.reload();await account.waitForFunction(()=>GamePortal.stats?.kills>=1&&GamePortal.canPlayStage('castle'));
+-    await account.evaluate(()=>GamePortal.openLogin());
++    await account.evaluate(()=>{ GamePortal.openLogin(); });
+     await account.getByRole('dialog').waitFor();await account.screenshot({path:out+'/perfil.png'});
+     check('conta guarda fase e estatísticas no servidor após recarregar; acesso direto ao castelo liberado');
+     assert(!errors.length,errors.join('; '));
+     console.log(JSON.stringify({ok:true,checks:checks.length,pageErrors:errors.length,artifacts:out}));
+--- before/tests/browser_new_content.cjs
++++ after/tests/browser_new_content.cjs
+@@ -0,0 +1,159 @@
++// Conteúdo e travessia com Phaser real; runner usa exclusivamente dados descartáveis.
++const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const base = process.env.MURALHA_TEST_URL;
++if (!base) throw Error('Execute tests/browser_accounts.py --new-content');
++const out = process.env.MURALHA_TEST_ARTIFACTS || path.join(require('node:os').tmpdir(), 'muralha-novos-poderes');
++fs.mkdirSync(out, { recursive: true });
++const ready = (p, stage = 'forest') => p.waitForFunction(stage =>
++  window.GAME?.scene.isActive('Game') && GAME.scene.getScene('Game').gameReady &&
++  !GAME.scene.getScene('Game').cinematic && GAME.scene.getScene('Game').stageId === stage &&
++  !GAME.scene.getScene('Game').cameras.main.fadeEffect.isRunning, stage);
++(async () => {
++  const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome',
++    headless: true, args: ['--no-sandbox', '--disable-background-timer-throttling', '--disable-renderer-backgrounding'] });
++  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
++  const errors = [], checks = [];
++  page.on('pageerror', error => errors.push(error.message));
++  page.setDefaultTimeout(25000);
++  const check = message => { checks.push(message); console.log('OK: ' + message); };
++  const capture = name => page.screenshot({ path: path.join(out, name + '.png') });
++  try {
++    await page.goto(base + '/?char=channeler&god&nointro');
++    await ready(page);
++    assert(await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game'); g.spawningEnabled = false; Sfx.muted = true;
++      return g.player.def.id === 'channeler' && g.player.maxHp === 110 && g.player.hasPower('plasma')?.level === 1;
++    }), 'Canalizador deve começar com Plasma e vida própria');
++    check('Canalizador inicia uma partida com Plasma');
++
++    for (const id of ['cyclone', 'radiant_beam', 'plasma', 'meteor']) {
++      const result = await page.evaluate(id => {
++        const g = GAME.scene.getScene('Game'), p = g.player;
++        g.scene.resume();
++        for (const w of p.powers) w.destroy(); p.powers = [];
++        for (const shot of g.pShots.items) if (shot.live) g.pShots.kill(shot);
++        g.enemies.killAllSilently(); g.enemyShots.clear(); g.hazards.length = 0;
++        g.pendingLevels = 0; g.levelUpOpen = false; g.spawningEnabled = false;
++        p.x = 2000; p.y = 3000; p.sprite.setPosition(p.x, p.y);
++        const targets = [0, -60, 60].map(dy => {
++          const e = g.enemies.spawn('forest_rootling', p.x + 160, p.y + dy, 1);
++          e.hp = e.maxHp = 100000; e.def = { ...e.def, speed: 0, summon: undefined, shell: undefined };
++          return e;
++        });
++        const power = p.addPower(id), before = g.totalDamage;
++        g.botInput = { x: 0, y: 0, dash: false };
++        for (let i = 0; i < 120; i++) g.update(i * 50, 50);
++        const damage = g.totalDamage - before;
++        power.timer = 0;
++        for (let i = 0; i < 12; i++) g.update(i * 50, 50);
++        g.botInput = null; g.scene.pause();
++        return { damage, levels: power.maxLevel, shots: g.pShots.items.filter(s => s.live).length,
++          missing: !g.textures.exists('i_' + id), alive: targets.filter(e => e.alive).length };
++      }, id);
++      assert(result.damage > 0, id + ' precisa causar dano real');
++      assert.equal(result.levels, 8, id + ' precisa de oito níveis');
++      assert(!result.missing && result.shots <= 160, id + ' precisa de ícone e respeitar o pool');
++      await capture('poder-' + id);
++      check(id + ': dano real, oito níveis, ícone e pool limitado');
++    }
++    await page.evaluate(() => { GAME.scene.getScene('Game').scene.resume(); });
++    assert(await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game');
++      g.fx.embers(g.player.x, g.player.y, 5000);
++      return g.fx.em.ember.getAliveParticleCount() > 0 && g.fx.em.ember.getAliveParticleCount() <= 128 &&
++        g.world.fireSources.length > 15;
++    }), 'Brasas precisam existir e respeitar o orçamento compartilhado');
++    check('fontes ambientais e brasas pequenas usam emissor limitado');
++
++    await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game');
++      g.enemies.killAllSilently(); g.enemyShots.clear(); g.hazards.length = 0;
++      for (const power of g.player.powers) power.destroy(); g.player.powers = [];
++      for (const [id, dx] of [['forest_witch', -230], ['forest_storm_mage', 230]]) {
++        const e = g.enemies.spawn(id, g.player.x + dx, g.player.y - 40, 1);
++        e.hp = e.maxHp = 100000; e.shellCd = 0;
++      }
++      g.grid.clear(); for (const e of g.enemies.pool) if (e.alive) g.grid.insert(e);
++      // A IA de ataques, como o diretor, respeita o bloqueio global de combate.
++      g.spawningEnabled = true; g.enemies.update(.05); g.spawningEnabled = false;
++      g.fx.update(.4); g.scene.pause();
++    });
++    const warnings = await page.evaluate(() => GAME.scene.getScene('Game').hazards.map(h => ({kind:h.kind, delay:h.delay})));
++    assert(warnings.some(h => h.kind === 'dark') && warnings.some(h => h.kind === 'spark'), 'Criaturas precisam de ataques próprios');
++    assert(warnings.every(h => h.delay >= .8), 'Ataques precisam dar tempo para desviar');
++    await capture('bruxa-mago-avisos');
++    check('bruxa e mago elétrico anunciam ataques distintos no cenário');
++
++    await page.evaluate(() => { GAME.scene.stop('UI'); GAME.scene.stop('Game'); GAME.scene.start('Select'); });
++    await page.waitForFunction(() => GAME.scene.isActive('Select') && !GAME.scene.getScene('Select').cameras.main.fadeEffect.isRunning);
++    assert(await page.evaluate(() => {
++      const s = GAME.scene.getScene('Select');
++      return s.ids.length === 4 && s.cards.every(c => c.panel.x - c.panel.width / 2 >= 0 && c.panel.x + c.panel.width / 2 <= 1280);
++    }), 'Quatro cartões devem ficar inteiros na tela');
++    await capture('quatro-personagens');
++    await page.keyboard.press('4');
++    await page.waitForFunction(() => GAME.scene.isActive('StageSelect'));
++    assert.equal(await page.evaluate(() => GAME.scene.getScene('StageSelect').charId), 'channeler');
++    check('quatro heróis cabem na tela e atalho 4 escolhe Canalizador');
++
++    await page.evaluate(() => { GAME.scene.stop('StageSelect'); GAME.scene.start('Game', { char: 'channeler', stage: 'forest' }); });
++    await ready(page);
++    await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game'); g.godMode = true; g.spawningEnabled = false;
++      for (const id of ['cyclone', 'radiant_beam', 'meteor']) g.player.addPower(id);
++      for (const power of g.player.powers) power.levelUp();
++      g.player.dashLevel = 2; g.t = 900; g.startBossFight();
++      g.boss.invuln = false; g.damageEnemy(g.boss, g.boss.hp + 1, null);
++      window.__passageCheck = { time: g.totalTime, points: g.points, hp: g.player.hp };
++    });
++    assert(await page.evaluate(() => !!GAME.scene.getScene('Game').cinematic), 'Golpe fatal deve iniciar cinema imediatamente');
++    for (const key of ['g', 'F2', 'p', 'Escape', 'Space']) await page.keyboard.press(key);
++    assert(await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game'), before = window.__passageCheck;
++      return !GamePortal.dialogOpen && !g.scene.get('UI').paused && g.totalTime === before.time &&
++        g.points === before.points && g.player.hp === before.hp;
++    }), 'Cinema não pode receber menus, dano nem tempo extra');
++    await capture('guardiao-derrotado');
++    await page.waitForFunction(() => {
++      const g = GAME.scene.getScene('Game');
++      return g.cinematic === 'forest-gate' && g.world.gateLeaves?.[0]?.scaleX < .85;
++    });
++    await capture('portao-abrindo');
++    await page.waitForFunction(() => GAME.scene.getScene('Game').stageCleared && !GAME.scene.getScene('Game').cinematic);
++    assert(await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game'); return g.world.gateOpen && !g.ended && g.totalTime === window.__passageCheck.time;
++    }));
++    check('guardião → raízes → abertura do portão → controle, sem pontuação extra');
++
++    await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game'), p = g.player;
++      p.x = g.world.gate.x; p.y = g.world.gate.y + 80; p.sprite.setPosition(p.x, p.y);
++      window.__passageCheck.startY = p.y;
++      window.__passagePromise = g.enterCastle();
++    });
++    await page.waitForFunction(() => {
++      const g = GAME.scene.getScene('Game');
++      return g.stageId === 'forest' && g.cinematic === 'castle-entry' && g.player.y < window.__passageCheck.startY - 10;
++    });
++    assert.equal(await page.evaluate(() => GAME.scene.getScene('Game').enterCastle()), false, 'Entrada repetida deve ser rejeitada');
++    await capture('entrando-na-porta');
++    await page.waitForFunction(() => {
++      const g = GAME.scene.getScene('Game'); return g.stageId === 'castle' && g.cinematic === 'castle-arrival';
++    });
++    await capture('saindo-no-castelo');
++    await ready(page, 'castle');
++    assert(await page.evaluate(() => {
++      const g = GAME.scene.getScene('Game'), p = g.player;
++      return p.def.id === 'channeler' && p.hp === p.maxHp && p.dashLevel === 2 &&
++        ['cyclone','radiant_beam','plasma','meteor'].every(id => p.hasPower(id)?.level === 2) &&
++        g.t < 2 && g.totalTime >= 900 && GAME.scene.isVisible('UI');
++    }), 'Travessia deve preservar personagem, armas, níveis e dash e devolver o HUD');
++    check('entrada → fade → saída preserva os quatro poderes e devolve combate/HUD');
++    assert.deepEqual(errors, [], 'Navegador sem erros JavaScript');
++    console.log(JSON.stringify({ok:true, checks:checks.length, pageErrors:errors.length, artifacts:out}));
++  } catch (error) { await capture('falha').catch(()=>{}); console.error('PAGE ERRORS', errors); throw error; }
++  finally { await browser.close(); }
++})().catch(error => { console.error(error.stack); process.exitCode=1; });
+--- before/tests/browser_portal_controls.cjs
++++ after/tests/browser_portal_controls.cjs
+@@ -66,9 +66,9 @@
+     await page.waitForFunction(() => { const ui = GAME.scene.getScene('UI'); return ui.time.now - ui.lvlOpenAt >= 350; });
+     await page.keyboard.press('1'); await moves();
+     check('escolha de melhoria continua pausada e aceita o teclado após fechar ranking');
+     await open('Entrar / Criar conta');
+-    await page.evaluate(() => GamePortal.openLeaderboard());
++    await page.evaluate(() => { GamePortal.openLeaderboard(); });
+     await closeX();
+     assert(await page.evaluate(() => GAME.scene.isPaused('Game')), 'Diálogo interno liberou a partida com outra janela aberta');
+     await closeX(); await moves();
+     check('janelas sobrepostas só liberam o jogo ao fechar a última');
+--- before/tests/forest_cinema_checks.cjs
++++ after/tests/forest_cinema_checks.cjs
+@@ -0,0 +1,109 @@
++﻿const assert = require('node:assert/strict');
++if (process.argv.includes('--unit')) {
++ const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
++ const game = { cinematic: 'forest-defeat', gameReady: true, ended: false, player: {}, scene: { isActive: () => true, isPaused: () => false } };
++ const context = { location: { hostname: '127.0.0.1', port: '8765', origin: 'http://127.0.0.1:8765' }, localStorage: { getItem: () => null },
++  document: { body: null, addEventListener() {}, createElement() { throw Error('Blocked dialog reached the DOM'); } },
++  GAME: { scene: { getScene: () => game, isActive: key => key === 'Game', isPaused: () => false } } };
++ context.window = context;
++ vm.createContext(context);
++ for (const file of ['portal.js', 'guide.js', 'admin.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../js', file), 'utf8'), context, { filename: file });
++ context.GamePortal.user = { id: 1, role: 'admin', username: 'isolated-fixture' };
++ for (const state of ['forest-defeat', 'forest-roots', 'forest-gate', 'forest-return', 'castle-entry', 'castle-arrival']) {
++  game.cinematic = state;
++  assert.equal(context.GamePortal.openDialog('fixture'), null, state);
++  assert.doesNotThrow(() => context.PowerGuide.open(), state);
++  assert.doesNotThrow(() => context.GameAdmin.open(), state);
++  assert.equal(context.GamePortal.dialogOpen, false, state);
++ }
++ game.cinematic = null; game.finale = {};
++ assert.equal(context.GamePortal.openDialog('finale fixture'), null);
++ console.log('OK: direct dialogs, guide and admin blocked in all cinema states and CastleFinale');
++ process.exit(0);
++}
++const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
++const base = process.env.MURALHA_TEST_URL;
++if (!base && !process.argv.includes('--clock')) throw Error('Execute browser_accounts.py --forest-cinema');
++async function checkTweenClock(page) {
++ const path = require('node:path');
++ await page.addScriptTag({ path: path.join(__dirname, '../js/phaser.min.js') });
++ await page.addScriptTag({ path: path.join(__dirname, '../js/game.js') });
++ return page.evaluate(async () => {
++  const check = (ok, message) => { if (!ok) throw Error(message); };
++  const realNow = Date.now;
++  let now = realNow();
++  Date.now = () => now;
++  window.GamePortal = { ready: new Promise(() => {}) };
++  try {
++   for (const [maxLag, lagSkip] of [[500, 33], [275, 11]]) {
++    const g = new GameScene(), events = new Phaser.Events.EventEmitter();
++    g.events = events;
++    g.create(); // Register the real shutdown handler; portal readiness stays pending.
++    g.scene = { isActive: () => true, get: () => ({ scene: { setVisible() {} }, caption: { setText() {} } }), stop() {} };
++    g.input = { keyboard: { resetKeys() {} } };
++    g.player = { sprite: { anims: { pause() {} }, setAlpha() { return this; }, clearTint() {} } };
++    const manager = new Phaser.Tweens.TweenManager({ sys: { events } });
++    g.tweens = manager;
++    manager.start(); manager.setLagSmooth(maxLag, lagSkip);
++    g.setCinematic('forest-defeat', 'fixture');
++    let result;
++    g.cinematicDelay(2700).then(value => { result = value; });
++    now += 1; manager.tick();
++    const before = manager.time;
++    now += 1000; manager.tick();
++    check(manager.time - before >= .999, 'Cinematic TweenManager discards a real 1000 ms frame');
++    for (let i = 0; i < 3; i++) { now += 1000; manager.tick(); await Promise.resolve(); }
++    check(result === true, '2700 ms cinematic wait did not finish within four 1 FPS frames');
++    g.setCinematic('forest-gate', 'fixture');
++    g.setCinematic(null);
++    check(manager.maxLag === maxLag && manager.lagSkip === lagSkip, 'Normal completion did not restore the original lag policy');
++    g.setCinematic('castle-entry', 'fixture');
++    const interrupted = g.cinematicDelay(10000);
++    events.emit('shutdown');
++    check(await interrupted === false, 'Shutdown did not settle the cinematic wait');
++    check(manager.maxLag === maxLag && manager.lagSkip === lagSkip, 'Shutdown did not restore the original lag policy');
++   }
++   return 'OK: real Phaser TweenManager advances at 1 FPS and restores default/custom lag policies on completion and shutdown';
++  } finally { Date.now = realNow; }
++ });
++}
++(async () => {
++ const browser = await chromium.launch({headless:true, executablePath:process.env.CHROME_PATH || '/usr/bin/google-chrome',args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding']});
++ const page = await browser.newPage({viewport:{width:1280,height:720}}), errors=[];
++ page.on('pageerror', e=>{errors.push(e.message);console.error('PAGE ERROR:',e.message);});
++ const ready = stage => page.waitForFunction(s=>window.GAME?.scene.getScene('Game')?.gameReady && GAME.scene.getScene('Game').stageId===s,stage,{timeout:60000});
++ const restart = async () => {await page.evaluate(()=>{const g=GAME.scene.getScene('Game');window.previousCinemaInitialization=g.initialization;g.scene.restart({char:'mage',stage:'forest'});});await page.waitForFunction(()=>GAME.scene.getScene('Game').initialization!==window.previousCinemaInitialization);await ready('forest');};
++ const kill = () => page.evaluate(()=>{const g=GAME.scene.getScene('Game');g.startBossFight();g.boss.invuln=false;g.damageEnemy(g.boss,g.boss.maxHp);return {cinematic:g.cinematic,cleared:g.stageCleared,t:g.t,points:g.points};});
++ try {
++  console.log(await checkTweenClock(page));
++  if (process.argv.includes('--clock')) return;
++  await page.goto(base+'/?char=mage&god&nointro');await ready('forest');
++  const fatal=await kill(); assert.ok(fatal.cinematic,'fatal hit must synchronously lock cinema');assert.equal(fatal.cleared,false);
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game'),p=g.player,hp=p.hp,xp=p.xp,t=g.t,visual=g.visualTime;g.godMode=false;p.invuln=0;p.takeDamage(10000);p.gainXp(100000);g.update(0,1000);g.openLevelUp();return p.hp===hp&&p.xp===xp&&!p.dead&&!g.levelUpOpen&&g.t===t&&g.visualTime>=visual+1;}),'cinema blocks direct damage/XP and animates environment with uncapped frame delta');
++  assert.equal(await page.evaluate(()=>{const d=GamePortal.openDialog('cinema fixture');const opened=GamePortal.dialogOpen;d?.close();return opened;}),false,'dialog API must reject cinema');
++  await page.keyboard.press('Escape');await page.keyboard.press('g');await page.keyboard.press('F2');await page.keyboard.press('Space');
++  await page.waitForTimeout(600);
++  assert.deepEqual(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return {t:g.t,points:g.points,paused:GAME.scene.isPaused('Game'),dialog:GamePortal.dialogOpen,dash:g.requestDash};}),{t:fatal.t,points:fatal.points,paused:false,dialog:false,dash:false});
++  await page.waitForFunction(()=>GAME.scene.getScene('Game').stageCleared,null,{timeout:12000});
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return !g.cinematic && g.world.gateOpen && !g.ended && GAME.scene.isVisible('UI');}));
++  console.log('OK: fatal freeze, shortcut blocking, gate cinema and restored controls');
++  await page.evaluate(()=>{const g=GAME.scene.getScene('Game');g.player.x=2000;g.player.y=580;g.runStart=Promise.resolve({run_id:'cinema-fixture',ranked:false});window.advances=0;GamePortal.advanceRun=async()=>{window.advances++;throw Error('offline fixture');};window.crossing=g.enterCastle();g.enterCastle();});
++  await page.waitForTimeout(300);
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return g.stageId==='forest' && g.cinematic && g.player.y<580 && g.player.y>400;}),'entry must walk in the forest before restart');
++  await ready('castle');
++  assert.deepEqual(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return {advance:window.advances,cinematic:g.cinematic,practice:g.isPractice,run:g.carry.run.run_id,error:!!g.saveError,t:g.t<.2};}),{advance:1,cinematic:null,practice:true,run:'cinema-fixture',error:true,t:true});
++  console.log('OK: physical entry, once-only advance, offline carry and smooth arrival');
++  await restart();await kill();await page.waitForTimeout(400);await restart();await page.waitForTimeout(8000);
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return g.stageId==='forest' && !g.cinematic && !g.stageCleared && !g.world.gateOpen && !GAME.scene.isActive('FinaleOverlay');}),'old victory cannot mutate restarted scene');
++  console.log('OK: shutdown cancels victory and overlay');
++  await page.evaluate(()=>{const g=GAME.scene.getScene('Game');g.stageCleared=true;g.world.openCastleGate();g.player.x=2000;g.player.y=580;g.runStart=Promise.resolve({run_id:'late-fixture',ranked:false});window.advancePending=false;GamePortal.advanceRun=()=>new Promise(resolve=>{window.advancePending=true;window.releaseAdvance=resolve;});window.lateCrossing=g.enterCastle();});
++  await page.waitForFunction(()=>window.advancePending);
++  await restart();
++  await page.evaluate(()=>{window.releaseAdvance({});});
++  assert.equal(await page.evaluate(()=>window.lateCrossing),false,'late advance must settle without restarting current run');
++  assert.ok(await page.evaluate(()=>{const g=GAME.scene.getScene('Game');return g.gameReady&&g.stageId==='forest'&&!g.cinematic&&!g.stageCleared;}));
++  console.log('OK: delayed server response cannot restart a newer run');
++  assert.deepEqual(errors,[]);console.log('Forest cinema checks passed');
++ } finally {await browser.close();}
++})().catch(e=>{console.error(e);process.exitCode=1;});
++
+--- before/tests/new_creatures_checks.cjs
++++ after/tests/new_creatures_checks.cjs
+@@ -0,0 +1,60 @@
++// Real catalogs, director, AI and selection handlers run in an isolated VM.
++// Regressions caught: forest IDs leaking, warning coordinates following the player,
++// instant damage, missing stagger, fourth card offscreen or unreachable keyboard.
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++const assert = require('node:assert/strict');
++const ctx = vm.createContext({ console, Phaser: { Scene: class {}, BlendModes: { ADD: 1 } },
++  clamp: (v,a,b)=>Math.max(a,Math.min(b,v)), rand:(a,b)=>(a+b)/2,
++  angleDiff:(a,b)=>a-b, Sfx:{play(){}}, menuBackdrop(){} });
++for (const f of ['config','data','sprites','art','forest-enemies','enemies','scenes'])
++  vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/'+f+'.js'),'utf8'),ctx,{filename:f+'.js'});
++const run = code => vm.runInContext(code,ctx);
++const checks = [];
++function test(name, fn) { try { fn(); console.log('OK: '+name); } catch(e) { checks.push(name+': '+e.message); console.error('FAIL: '+name+': '+e.message); } }
++test('fourteen forest creatures enter its director and remain absent from castle',()=>{
++  assert.equal(run('FOREST_ENEMY_IDS.length'),14);
++  assert.equal(run(`['forest_witch','forest_storm_mage'].every(id=>FOREST_ENEMY_IDS.includes(id)&&ENEMIES[id].stage==='forest'&&ENEMY_ART[id].frames===4)`),true);
++  assert.equal(run(`new EnemyManager({add:{sprite:()=>({setVisible(){return this},setActive(){return this}})}}).ids.some(id=>id.startsWith('forest_'))`),false);
++  for(const id of ['forest_witch','forest_storm_mage']) {
++    assert.equal(run(`(()=>{const m=Object.create(EnemyManager.prototype);m.scene={difficulty:{id:'medium'}};m.ids=FOREST_ENEMY_IDS;m.counts={};m.weights=[];m.pickType(0);const before=m.weights[m.ids.indexOf('${id}')];m.pickType(500);return before===0&&m.weights[m.ids.indexOf('${id}')]>0})()`),true);
++    assert.equal(run(`FOREST_EVENTS.some(ev=>ev.enemy==='${id}'||ev.list?.['${id}'])`),true);
++  }
++});
++for (const [id, kind, delays] of [['forest_witch','dark',[1.5,1.5,1.5]],['forest_storm_mage','spark',[1.2,1.42,1.64]]]) {
++  test(id+' announces fixed positions, damage scaling, stagger and cooldown',()=>{
++    const result=run(`(()=>{
++      if(!ENEMIES['${id}']) return null;
++      const hazards=[],p={x:300,y:200};const sc={t:1,spawningEnabled:true,difficulty:{speedMul:1},fx:{burst(){}},addHazard:h=>hazards.push(h),world:{constrain(){}},grid:{query:()=>[]}};
++      const m=Object.create(EnemyManager.prototype);m.scene=sc;m.tmpS=[];
++      const e={def:ENEMIES['${id}'],x:0,y:200,state:'chase',atkCd:0,shellCd:0,contactCd:0,chargeCd:0,face:0,phase:0,strafe:1,kx:0,ky:0,slowUntil:0,sprite:{setFlipX(){}}};
++      m.ai(e,.01,p,2);p.x=600;p.y=500;m.ai(e,.01,p,2);
++      return {hazards,x:e.x,cd:e.shellCd};
++    })()`);
++    assert.ok(result,'creature exists');
++    assert.equal(result.hazards.length,3,'one bounded three-zone attack during cooldown');
++    assert.deepEqual(Array.from(result.hazards,h=>Number(h.delay.toFixed(2))),delays);
++    assert.equal(result.hazards[0].x,300,'target stays where it was announced');
++    assert.equal(result.hazards[0].y,200);
++    assert.ok(result.hazards.every(h=>h.kind===kind&&h.dmg>20&&h.delay>=1.2));
++    assert.ok(result.cd>3);
++  });
++}
++test('four cards fit and left/right, four shortcuts, pointer and lastChar reach every hero',()=>{
++  // Renderer boundary only: production SelectScene owns layout and input callbacks.
++  run(`globalThis.objects=[];globalThis.handlers={};globalThis.saved={lastChar:'channeler'};
++    function object(x,y,w,h,text){const o={x,y,width:w,height:h,text,handlers:{}};for(const key of ['setOrigin','setDepth','setTint','setBlendMode','setScale','setAlpha','setStrokeStyle','setInteractive','play'])o[key]=()=>o;o.on=(name,cb)=>{o.handlers[name]=cb;return o};objects.push(o);return o}
++    globalThis.selectScene=new SelectScene();selectScene.cameras={main:{fadeIn(){},fadeOut(){},once(){}}};
++    selectScene.registry={get:k=>saved[k],set:(k,v)=>saved[k]=v};selectScene.add={image:(x,y)=>object(x,y),sprite:(x,y)=>object(x,y),rectangle:(x,y,w,h)=>object(x,y,w,h),text:(x,y,text)=>object(x,y,0,0,text)};
++    selectScene.input={keyboard:{on:(key,cb)=>handlers[key]=cb}};menuBackdrop=()=>{};selectScene.create();`);
++  assert.equal(run('selectScene.cards.length'),4);
++  assert.equal(run('selectScene.ids[selectScene.sel]'),'channeler');
++  const panels=run('selectScene.cards.map(c=>({x:c.panel.x,w:c.panel.width}))');
++  for(let i=0;i<4;i++){assert.ok(panels[i].x-panels[i].w/2>=20);assert.ok(panels[i].x+panels[i].w/2<=1260);if(i)assert.ok(panels[i].x-panels[i].w/2>panels[i-1].x+panels[i-1].w/2);}
++  run(`handlers['keydown-RIGHT']()`);assert.equal(run('selectScene.sel'),0);
++  run(`handlers['keydown-LEFT']()`);assert.equal(run('selectScene.sel'),3);
++  for(const [i,key] of ['ONE','TWO','THREE','FOUR'].entries()) {run(`selectScene.going=false;handlers['keydown-${key}']()`);assert.equal(run('saved.lastChar'),['vanguard','ranger','mage','channeler'][i]);}
++  for(let i=0;i<4;i++){run(`selectScene.going=false;selectScene.cards[${i}].panel.handlers.pointerdown()`);assert.equal(run('selectScene.sel'),i);}
++});
++if(checks.length) { console.error(checks.length+' failing checks');process.exitCode=1; }
+--- before/tests/new_powers_checks.cjs
++++ after/tests/new_powers_checks.cjs
+@@ -0,0 +1,120 @@
++// Pure combat checks: run the real catalogs, weapon logic and shot pool in a VM.
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++const ids = ['cyclone', 'radiant_beam', 'plasma', 'meteor'];
++const context = vm.createContext({ console, Math, Set, Map, CONFIG: { maxPlayerShots: 160 }, Phaser: { BlendModes: { ADD: 1, NORMAL: 0 } } });
++for (const file of ['data.js', 'powers.js', 'progression.js']) vm.runInContext(fs.readFileSync(path.join(__dirname, '../js', file), 'utf8'), context, { filename: file });
++const api = vm.runInContext('({POWERS, CHARACTERS, POWER_IMPL, PowerInstance, PlayerShots, drawProgressionAssets})', context);
++function sprite(x, y, texture) {
++  const s = { x, y, texture, visible: true, destroyed: false };
++  for (const method of ['setDepth', 'setAlpha', 'setScale', 'setRotation', 'setBlendMode', 'setFrame', 'setOrigin', 'setDisplaySize', 'setTint']) s[method] = function (...args) { this[method.slice(3)] = args; return this; };
++  s.setPosition = function (x, y) { this.x = x; this.y = y; return this; };
++  s.setTexture = function (t) { this.texture = t; return this; };
++  s.setVisible = function (v) { this.visible = v; return this; };
++  s.setActive = function (v) { this.active = v; return this; };
++  s.destroy = function () { this.destroyed = true; this.visible = false; };
++  return s;
++}
++function fixture(id, level = 1, mods = {}) {
++  const enemies = [], sprites = [], hits = [];
++  const query = (x, y, r, out = []) => { out.length = 0; for (const e of enemies) if (e.alive && Math.hypot(e.x - x, e.y - y) <= r + e.radius) out.push(e); return out; };
++  const sc = { t: 0, tmpA: [], tmpB: [], tmpC: [], queryEnemies: query, grid: { query }, world: { outside: () => false },
++    fx: Object.fromEntries(['ring', 'burst', 'bolt', 'embers', 'teleCircle'].map(k => [k, () => {}])), cameras: { main: { shake() {} } },
++    add: { image(x, y, texture) { const s = sprite(x, y, texture); sprites.push(s); return s; } },
++    damageEnemy(e, damage, source) { if (!e.alive) return; e.hp -= damage; hits.push({ uid: e.uid, damage, source }); if (e.hp <= 0) e.alive = false; },
++  };
++  const player = { x: 0, y: 0, aim: { x: 1, y: 0 }, mods: { damage: 1, rate: 1, range: 1, area: 1, ...mods } };
++  sc.pShots = new api.PlayerShots(sc);
++  const power = new api.PowerInstance(sc, player, api.POWERS[id]);
++  while (power.level < level) power.levelUp();
++  function enemy(x, y, options = {}) { const e = { x, y, uid: enemies.length + 1, hp: 1e7, radius: 10, alive: true, hitT: {}, def: { kb: 1 }, ...options }; enemies.push(e); return e; }
++  function step(duration, dt = .01) { for (let t = 0; t < duration - 1e-8; t += dt) { sc.t += dt; power.update(dt); sc.pShots.update(dt); } }
++  return { sc, player, power, enemies, sprites, hits, enemy, step };
++}
++let checks = 0;
++function check(name, fn) { try { fn(); checks++; console.log('PASS', name); } catch (err) { console.error('FAIL', name); throw err; } }
++
++check('four common catalog entries, seven distinct upgrades and channeler starting values', () => {
++  for (const id of ids) {
++    assert.ok(api.POWERS[id], 'missing common weapon ' + id);
++    assert.ok(api.POWER_IMPL[id]);
++    assert.notEqual(api.POWERS[id].obtainable, false);
++    assert.equal(api.POWERS[id].upgrades.length, 7);
++    assert.equal(new Set(api.POWERS[id].upgrades.map(u => u.text)).size, 7);
++    const f = fixture(id); const start = { ...f.power.s };
++    for (let n = 0; n < 7; n++) { const before = JSON.stringify(f.power.s); f.power.levelUp(); assert.notEqual(JSON.stringify(f.power.s), before); }
++    assert.equal(f.power.maxed, true); f.power.levelUp(); assert.equal(f.power.level, 8);
++    assert.ok(f.power.s.damage > start.damage); f.power.destroy();
++  }
++  assert.equal(api.CHARACTERS.channeler.hp, 110);
++  assert.equal(api.CHARACTERS.channeler.speed, 165);
++  assert.equal(api.CHARACTERS.channeler.startPower, 'plasma');
++});
++
++for (const id of ids) for (const level of [1, 8]) check(id + ' level ' + level + ' deals real modified damage and stops after destroy', () => {
++  const f = fixture(id, level, { damage: 1.6, area: 1.2, range: 1.2, rate: 1.3 });
++  f.enemy(90, -6); f.step(2);
++  assert.ok(f.hits.length > 0, id + ' never damaged its target');
++  assert.ok(f.hits.some(h => Math.abs(h.damage - f.power.dmg()) < .001), 'damage modifier must reach damageEnemy');
++  assert.equal(f.power.cd(), f.power.s.cooldown / 1.3);
++  assert.equal(f.power.range(), f.power.s.range * 1.2);
++  f.power.destroy(); const before = f.hits.length;
++  f.step(5); assert.equal(f.hits.length, before, 'destroyed weapon continues to damage');
++  assert.equal(f.sc.pShots.items.filter(s => s.live).length, 0);
++  assert.ok(f.sprites.filter(s => !f.sc.pShots.items.includes(s)).every(s => s.destroyed));
++});
++
++check('beam pierces only its sustained strip and hits again by interval', () => {
++  const f = fixture('radiant_beam'); const first = f.enemy(80, -6), second = f.enemy(180, -6), side = f.enemy(140, 120), behind = f.enemy(-80, -6);
++  f.step(1.05);
++  assert.ok(f.hits.filter(h => h.uid === first.uid).length >= 2);
++  assert.ok(second.hp < 1e7); assert.equal(side.hp, 1e7); assert.equal(behind.hp, 1e7);
++});
++check('cyclone advances and gently pulls common enemies, never bosses', () => {
++  const f = fixture('cyclone'); const common = f.enemy(110, 20), boss = f.enemy(110, 20, { uid: 99, isBoss: true });
++  f.step(1);
++  assert.ok(f.hits.some(h => h.uid === common.uid));
++  assert.notEqual(common.y, 20); assert.equal(boss.x, 110); assert.equal(boss.y, 20);
++});
++check('recycled enemy object with a new UID can be hit by existing plasma shot', () => {
++  const f = fixture('plasma', 8); const e = f.enemy(50, -6);
++  f.step(.49); assert.ok(f.hits.length);
++  e.uid = 999; e.x += 10; e.hp = 1e7; e.alive = true;
++  f.step(.06); assert.ok(f.hits.some(h => h.uid === 999), 'projectile retains object reference instead of UID');
++});
++check('meteor stores impact coordinates when target object is recycled', () => {
++  const f = fixture('meteor'); const old = f.enemy(100, 0); f.step(.41);
++  old.x = 700; old.uid = 888;
++  const replacement = f.enemy(100, 0, { uid: 777 }); f.step(1.1);
++  assert.ok(replacement.hp < 1e7); assert.equal(old.hp, 1e7);
++});
++check('meteor warning cancels before impact on destroy', () => {
++  const f = fixture('meteor'); f.enemy(100, 0); f.step(.45); assert.equal(f.hits.length, 0);
++  f.power.destroy(); f.step(3); assert.equal(f.hits.length, 0);
++});
++check('plasma cleanup removes only its own pooled shots', () => {
++  const f = fixture('plasma'); f.enemy(180, -6); f.step(.42);
++  const other = f.sc.pShots.fire({ tex: 'p_arrow', x: 0, y: 1000, ang: 0, speed: 1, range: 100, dmg: 1, pierce: 1, radius: 1 });
++  f.power.destroy(); assert.equal(other.live, true); assert.equal(f.sc.pShots.items.filter(s => s.live).length, 1);
++});
++check('fixed visual budgets and global 160 shot pool hold under extreme rate modifiers', () => {
++  for (const id of ids) {
++    const f = fixture(id, 8, { rate: 1000 }); f.enemy(100, 0); const initial = f.sprites.length;
++    f.step(12, .02);
++    assert.equal(f.sc.pShots.items.length, 160);
++    assert.ok(f.sc.pShots.items.filter(s => s.live).length <= 160);
++    assert.equal(f.sprites.length, initial, id + ' allocates sprites during combat instead of reusing its budget');
++    assert.ok(initial <= 184, 'persistent visual budget exceeds 24 sprites');
++    f.power.destroy();
++  }
++});
++check('procedural icons and all four weapon textures can be generated', () => {
++  const assets = new Set();
++  context.SPR = { make(sc, key, w, h, frames, scale, draw) { assets.add(key); const pen = Object.fromEntries(['r','p','m','mp','line','disc','shadow'].map(k => [k, () => {}])); for (let f = 0; f < frames; f++) draw(pen, f); } };
++  api.drawProgressionAssets({});
++  for (const id of ids) assert.ok(assets.has('i_' + id), 'missing icon ' + id);
++  for (const tex of ['fx_cyclone', 'fx_radiant_beam', 'p_plasma', 'p_meteor', 'fx_meteor_mark']) assert.ok(assets.has(tex), 'missing combat texture ' + tex);
++});
++console.log(`new_powers_checks: ${checks} checks passed`);
+--- before/tests/selector_checks.cjs
++++ after/tests/selector_checks.cjs
+@@ -52,18 +52,18 @@
+   assert.deepEqual(await page.evaluate(() => GamePortal.getProgress()), { castle_unlocked: true, forest_clears: 1, castle_clears: 1 });
+   checked('convidado salva desbloqueio próprio e recarrega sem depender da conta');
+ 
+   async function login(name) {
+-    await page.evaluate(() => GamePortal.openLogin());
++    await page.evaluate(() => { GamePortal.openLogin(); });
+     const dialog = page.getByRole('dialog').last();
+     await dialog.getByLabel('Nome de usuário', { exact: true }).fill(name);
+     await dialog.getByLabel('Senha', { exact: true }).fill('SenhaDoSeletor!2026');
+     await dialog.getByRole('button', { name: 'Entrar', exact: true }).last().click();
+     await page.waitForFunction(expected => GamePortal.user?.username === expected, name);
+     await dialog.waitFor({ state: 'detached' });
+   }
+   async function logout() {
+-    await page.evaluate(() => GamePortal.openLogin());
++    await page.evaluate(() => { GamePortal.openLogin(); });
+     await page.getByRole('dialog').last().getByRole('button', { name: 'Sair da conta', exact: true }).click();
+     await page.waitForFunction(() => !GamePortal.user && !GamePortal.dialogOpen);
+   }
+   await login('SelectorA');
+@@ -93,9 +93,9 @@
+     return respond(route, { saved: true, ranked: true, points: 800, progress: current.progress, stats: current.stats });
+   });
+   await page.evaluate(() => GamePortal.finishRun({ run_id: 'selector-run', victory: true }));
+   assert.deepEqual(await page.evaluate(() => ({ stats: GamePortal.stats, csrf: GamePortal.csrf })), { stats: finishedStats, csrf: 'selector-csrf-a' });
+-  await page.evaluate(() => GamePortal.openLogin());
++  await page.evaluate(() => { GamePortal.openLogin(); });
+   const account = page.getByRole('dialog').last();
+   for (const label of ['Partidas', 'Vitórias', 'Abates', 'Dano', 'Pontos', 'Melhor partida', 'Floresta', 'Castelo', 'Em breve']) {
+     await account.getByText(label, { exact: true }).waitFor();
+   }
+--- before/tests/test_accounts.py
++++ after/tests/test_accounts.py
+@@ -1,5 +1,6 @@
+ import concurrent.futures
++from contextlib import closing
+ import http.client
+ import importlib.util
+ import json
+ import os
+@@ -79,9 +80,9 @@
+         self.assertEqual(data['user']['role'], 'admin')
+         return data
+ 
+     def age(self, run_id, seconds):
+-        with sqlite3.connect(self.private / 'jogo.sqlite3') as db:
++        with closing(sqlite3.connect(self.private / 'jogo.sqlite3')) as db, db:
+             db.execute('UPDATE runs SET started_at=started_at-? WHERE id=?', (seconds, run_id))
+ 
+     def start(self, practice=False):
+         status, data, _ = self.request('/api/runs/start', {'hero': 'vanguard', 'practice': practice, 'stage': 'castle'})
+@@ -131,9 +132,9 @@
+             session = self.request('/api/session')[1]
+             self.assertEqual(session['user']['id'], registered['user']['id'])
+             self.assertEqual(session['csrf'], registered['csrf'])
+             self.assert_empty_profile(session)
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             self.assertEqual(db.execute('SELECT state FROM runs WHERE id=?', (run['run_id'],)).fetchone()[0], 'started')
+             self.assertEqual(db.execute('SELECT COUNT(*) FROM runs').fetchone()[0], 1)
+ 
+     def test_progress_advance_and_victory_are_counted_once_and_survive_account_switch(self):
+@@ -147,9 +148,9 @@
+             self.assertEqual(advanced.get('progress'), {
+                 'castle_unlocked': True, 'forest_clears': 1, 'castle_clears': 0})
+             self.assertEqual(advanced.get('stats', {}).get('runs'), 0)
+         self.age(run['run_id'], 901)
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE runs SET advanced_at=advanced_at-901 WHERE id=?', (run['run_id'],))
+         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+             finishes = list(pool.map(lambda _: self.finish(run['run_id'], duration=1801, victory=True), range(2)))
+         self.assertEqual(sorted(status for status, _, _ in finishes), [200, 409])
+@@ -158,9 +159,9 @@
+         self.assertEqual(finished.get('progress'), profile)
+         self.assertEqual(finished.get('stats'), {
+             'runs': 1, 'victories': 1, 'kills': 12, 'damage': 123.9, 'points': 24456, 'best_points': 24456})
+         app = self.module.GameApplication(ROOT, self.private)
+-        with app.connect() as db:
++        with closing(app.connect()) as db, db:
+             persisted = app.session_payload(db, app.session(db, self.cookie))
+         self.assertEqual(persisted['progress'], profile)
+         self.assertEqual(persisted['stats'], finished['stats'])
+         self.request('/api/logout', {})
+@@ -177,9 +178,9 @@
+         self.assertEqual(self.request('/api/runs/start', {
+             'hero': 'vanguard', 'practice': True, 'stage': 'castle'})[0], 200)
+ 
+     def test_custom_rules_require_valid_stage_times_and_grant_progress_without_ranked_stats(self):
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE settings SET value_json=? WHERE id=1', (
+                 json.dumps({**self.module.DEFAULT_SETTINGS, 'bossTime': 30}),))
+         self.register()
+         _, run, _ = self.request('/api/runs/start', {'hero': 'vanguard', 'practice': False, 'stage': 'forest'})
+@@ -193,9 +194,9 @@
+         self.assertEqual(self.finish(run['run_id'], duration=60, victory=True)[0], 400)
+         self.age(run['run_id'], 31)
+         # Total elapsed alone cannot prove that the castle itself was completed.
+         self.assertEqual(self.finish(run['run_id'], duration=61, victory=True)[0], 400)
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE runs SET advanced_at=advanced_at-31 WHERE id=?', (run['run_id'],))
+         status, finished, _ = self.finish(run['run_id'], duration=61, victory=True)
+         self.assertEqual(status, 200, finished)
+         self.assertFalse(finished['ranked'])
+@@ -210,9 +211,9 @@
+         status, advanced, _ = self.request('/api/runs/advance', {'run_id': run['run_id']})
+         self.assertEqual(status, 200, advanced)
+         self.assert_empty_profile(advanced)
+         self.age(run['run_id'], 1801)
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE runs SET advanced_at=advanced_at-901 WHERE id=?', (run['run_id'],))
+         status, finished, _ = self.finish(run['run_id'], duration=1800, victory=True)
+         self.assertEqual(status, 200, finished)
+         self.assert_empty_profile(finished)
+@@ -224,9 +225,9 @@
+             self.age(run['run_id'], 901)
+             if stage == 'forest':
+                 self.assert_empty_profile(self.request('/api/runs/advance', {'run_id': run['run_id']})[1])
+                 self.age(run['run_id'], 901)
+-                with self.httpd.app.connect() as db:
++                with closing(self.httpd.app.connect()) as db, db:
+                     db.execute('UPDATE runs SET advanced_at=advanced_at-901 WHERE id=?', (run['run_id'],))
+             status, finished, _ = self.finish(run['run_id'], duration=1800 if stage == 'forest' else 900, victory=True)
+             self.assertEqual(status, 200, finished)
+             self.assert_empty_profile(finished)
+@@ -255,16 +256,16 @@
+ 
+     def test_profile_migration_accepts_legitimate_legacy_results_without_rewriting_accounts_or_scores(self):
+         registered, _ = self.register()
+         player_id = registered['user']['id']
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             original_hash = db.execute('SELECT password_hash FROM users WHERE id=?', (player_id,)).fetchone()[0]
+             admin_id = db.execute("SELECT id FROM users WHERE role='admin'").fetchone()[0]
+         for has_stages in (False, True):
+             with self.subTest(has_stages=has_stages):
+                 private = Path(self.tmp.name) / ('legacy-stages' if has_stages else 'legacy-castle')
+                 private.mkdir(mode=0o700)
+-                with self.httpd.app.connect() as source, sqlite3.connect(private / 'jogo.sqlite3') as db:
++                with closing(self.httpd.app.connect()) as source, source, closing(sqlite3.connect(private / 'jogo.sqlite3')) as db, db:
+                     source.backup(db)
+                     db.execute('DROP TABLE runs')
+                     stage_columns = ",start_stage TEXT NOT NULL DEFAULT 'castle',current_stage TEXT NOT NULL DEFAULT 'castle',advanced_at REAL" if has_stages else ''
+                     db.execute('''CREATE TABLE runs (
+@@ -292,9 +293,9 @@
+                             ('e' * 32, player_id, json.dumps({**self.module.DEFAULT_SETTINGS, 'bossTime': 30})))
+                     previous_results = db.execute('SELECT id,points FROM runs ORDER BY id').fetchall()
+                 app = self.module.GameApplication(ROOT, private)
+                 app.initialize()
+-                with app.connect() as db:
++                with closing(app.connect()) as db, db:
+                     profile = app.session_payload(db, app.session(db, self.cookie))
+                     self.assertEqual(profile.get('progress'), {
+                         'castle_unlocked': True, 'forest_clears': 2 if has_stages else 0, 'castle_clears': 2 if has_stages else 1})
+                     self.assertEqual(profile.get('stats', {}).get('runs'), 1)
+@@ -308,9 +309,9 @@
+         data, headers = self.register()
+         self.assertEqual(data['user']['role'], 'player')
+         self.assertIn('HttpOnly', headers['Set-Cookie'])
+         self.assertIn('SameSite=Lax', headers['Set-Cookie'])
+-        with sqlite3.connect(self.private / 'jogo.sqlite3') as db:
++        with closing(sqlite3.connect(self.private / 'jogo.sqlite3')) as db, db:
+             row = db.execute('SELECT password_hash FROM users WHERE id=?', (data['user']['id'],)).fetchone()
+             self.assertNotIn('SamplePass!2026', row[0])
+             self.assertIn('600000', row[0])
+             session_hash = db.execute('SELECT token_hash FROM sessions WHERE user_id=?', (data['user']['id'],)).fetchone()[0]
+@@ -412,9 +413,9 @@
+ 
+     def test_legacy_runs_migrate_without_restoring_unbound_open_scores(self):
+         legacy=Path(self.tmp.name)/'legacy-data'
+         legacy.mkdir(mode=0o700)
+-        with sqlite3.connect(legacy/'jogo.sqlite3') as db:
++        with closing(sqlite3.connect(legacy/'jogo.sqlite3')) as db, db:
+             db.execute('''CREATE TABLE runs (
+                 id TEXT PRIMARY KEY,user_id INTEGER NOT NULL,hero TEXT NOT NULL,
+                 practice INTEGER NOT NULL,ranked INTEGER NOT NULL,started_at REAL NOT NULL,
+                 finished_at REAL,state TEXT NOT NULL DEFAULT 'started',settings_json TEXT NOT NULL,
+@@ -423,9 +424,9 @@
+                 VALUES(?,1,'vanguard',0,1,0,'{}')''',('x'*32,))
+             db.execute('''INSERT INTO runs(id,user_id,hero,practice,ranked,started_at,settings_json,state,points)
+                 VALUES(?,1,'vanguard',0,1,0,'{}','finished',1234)''',('y'*32,))
+         app=self.module.GameApplication(ROOT,legacy)
+-        with app.connect() as db:
++        with closing(app.connect()) as db, db:
+             row=db.execute('SELECT state,ranked,session_hash FROM runs WHERE id=?',('x'*32,)).fetchone()
+             self.assertEqual(tuple(row),('abandoned',0,None))
+             self.assertEqual(db.execute('SELECT points FROM runs WHERE id=?',('y'*32,)).fetchone()[0],1234)
+ 
+@@ -456,14 +457,14 @@
+         self.assertEqual(self.finish(run['run_id'], duration=540, victory=True)[0], 400)
+ 
+     def test_stage_migration_preserves_custom_settings_and_legacy_scores(self):
+         legacy = {**self.module.DEFAULT_SETTINGS, 'bossTime':540}
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE settings SET value_json=? WHERE id=1', (json.dumps(legacy),))
+         self.httpd.app.initialize()
+         self.assertEqual(self.request('/api/session')[1]['settings']['bossTime'], 900)
+         custom = {**legacy, 'bossTime':30}
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE settings SET value_json=? WHERE id=1', (json.dumps(custom),))
+         self.httpd.app.initialize()
+         self.assertEqual(self.request('/api/session')[1]['settings']['bossTime'], 30)
+ 
+@@ -476,16 +477,16 @@
+         self.age(run['run_id'],901)
+         self.assertEqual(self.finish(run['run_id'],duration=900,victory=True)[0],400)
+         status,advanced,_=self.request('/api/runs/advance',{'run_id':run['run_id']})
+         self.assertEqual((status,advanced['stage']),(200,'castle'))
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             first=db.execute('SELECT advanced_at FROM runs WHERE id=?',(run['run_id'],)).fetchone()[0]
+         self.assertEqual(self.request('/api/runs/advance',{'run_id':run['run_id']})[0],200)
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             self.assertEqual(db.execute('SELECT advanced_at FROM runs WHERE id=?',(run['run_id'],)).fetchone()[0],first)
+         self.assertEqual(self.finish(run['run_id'],duration=900,victory=True)[0],400)
+         self.age(run['run_id'],901)
+-        with self.httpd.app.connect() as db:
++        with closing(self.httpd.app.connect()) as db, db:
+             db.execute('UPDATE runs SET advanced_at=advanced_at-901 WHERE id=?',(run['run_id'],))
+         self.assertEqual(self.finish(run['run_id'],duration=1801,victory=True)[0],200)
+         rows=self.request('/api/leaderboard?stage=forest')[1]['entries']
+         self.assertEqual((len(rows),rows[0]['stage']),(1,'forest'))
+@@ -518,9 +519,9 @@
+         self.unlock_castle()
+         run=self.start()
+         self.assertEqual(run.get('settings'),settings)
+         self.assertFalse(run['ranked'])
+-        with sqlite3.connect(self.private/'jogo.sqlite3') as db:
++        with closing(sqlite3.connect(self.private/'jogo.sqlite3')) as db, db:
+             stored=json.loads(db.execute('SELECT settings_json FROM runs WHERE id=?',(run['run_id'],)).fetchone()[0])
+         self.assertEqual(stored,run['settings'])
+ 
+     def test_private_storage_is_outside_static_root_and_respects_environment(self):
+@@ -567,9 +568,9 @@
+         self.assertEqual(self.request('/api/leaderboard')[1]['entries'],[])
+         self.assertEqual(self.request('/api/login', {'username':'PlayerOne','password':'SamplePass!2026'})[0],403)
+         self.assertEqual(self.request('/api/admin/ban', {'user_id':user['user']['id'], 'banned':False,'reason':'liberado'})[0],200)
+         self.assertEqual(len(self.request('/api/leaderboard')[1]['entries']),1)
+-        with sqlite3.connect(self.private/'jogo.sqlite3') as db:
++        with closing(sqlite3.connect(self.private/'jogo.sqlite3')) as db, db:
+             self.assertGreaterEqual(db.execute('SELECT COUNT(*) FROM audit').fetchone()[0],2)
+ 
+     def test_admin_command_schema_and_settings(self):
+         self.admin()
+@@ -590,8 +591,28 @@
+         self.assertEqual(self.request('/api/admin/settings',settings)[:2],(200,{'settings':settings}))
+         self.assertEqual(self.request('/api/session')[1]['settings'],settings)
+         self.assertEqual(self.request('/api/admin/settings',{**settings,'maxEnemies':241})[0],400)
+ 
++    def test_channeler_can_start_and_finish_an_authenticated_run(self):
++        self.register('CanalizadorTeste')
++        status, run, _ = self.request('/api/runs/start', {
++            'hero': 'channeler', 'practice': True, 'stage': 'forest'})
++        self.assertEqual(status, 200, run)
++        status, result, _ = self.finish(run['run_id'], hero='channeler',
++                                      kills=0, damage=0, duration=0, level=1)
++        self.assertEqual(status, 200, result)
++        self.assertTrue(result['saved'])
++        self.assertFalse(result['ranked'])
++
++    def test_admin_can_use_new_powers_and_forest_creatures(self):
++        self.admin()
++        for power in ('cyclone', 'radiant_beam', 'plasma', 'meteor'):
++            body = {'command': 'power', 'args': {'id': power, 'level': 8}}
++            self.assertEqual(self.request('/api/admin/command', body)[:2], (200, body))
++        for enemy in ('forest_witch', 'forest_storm_mage'):
++            body = {'command': 'spawn', 'args': {'enemy': enemy, 'count': 2}}
++            self.assertEqual(self.request('/api/admin/command', body)[:2], (200, body))
++
+     def test_concurrent_finish_saves_once_and_password_revokes_other_session(self):
+         self.register()
+         self.unlock_castle()
+         other_cookie = self.cookie
+@@ -612,9 +633,9 @@
+         r=self.start(); self.age(r['run_id'],30); self.finish(r['run_id'])
+         existing = (self.private/'admin-inicial.json').read_bytes()
+         app = self.module.GameApplication(ROOT,self.private)
+         self.assertEqual((self.private/'admin-inicial.json').read_bytes(),existing)
+-        with app.connect() as db:
++        with closing(app.connect()) as db, db:
+             self.assertEqual(db.execute("SELECT COUNT(*) FROM users WHERE role='admin'").fetchone()[0],1)
+             self.assertEqual(db.execute("SELECT COUNT(*) FROM runs WHERE state='finished'").fetchone()[0],1)
+             self.assertEqual(app.session(db,self.cookie)['username'],'PlayerOne')
+         (self.private/'admin-inicial.json').unlink()
+@@ -641,9 +662,12 @@
+         self.assertEqual(headers['Access-Control-Allow-Origin'],'http://localhost:5500')
+         self.assertEqual(headers['Access-Control-Allow-Credentials'],'true')
+         self.assertEqual(self.request('/api/session',headers={'Host':'evil.example'})[0],403)
+         self.assertEqual(self.request('/api/register',method='OPTIONS',headers={'Origin':'http://127.0.0.1:5500','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,x-csrf-token'})[0],204)
+-        self.assertEqual(os.stat(self.private).st_mode&0o777,0o700)
+-        self.assertEqual(os.stat(self.private/'admin-inicial.json').st_mode&0o777,0o600)
+-        self.assertEqual(os.stat(self.private/'jogo.sqlite3').st_mode&0o777,0o600)
++        # Windows não representa permissões POSIX nos bits retornados por stat.
++        # As asserções HTTP de conteúdo privado/CORS acima valem nas duas plataformas.
++        if os.name == 'posix':
++            self.assertEqual(os.stat(self.private).st_mode&0o777,0o700)
++            self.assertEqual(os.stat(self.private/'admin-inicial.json').st_mode&0o777,0o600)
++            self.assertEqual(os.stat(self.private/'jogo.sqlite3').st_mode&0o777,0o600)
+ 
+ if __name__ == '__main__': unittest.main(verbosity=2)

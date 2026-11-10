@@ -1,0 +1,36 @@
+# SDD ledger — plan: docs/superpowers/plans/2026-11-09-catacumbas-e-segredos.md
+
+- Usuário aprovou todas as sete ideias com “bora fazer todas”. Implementação autorizada.
+- Spec e plano preparados em 09/11; escolhas não especificadas são do implementador.
+- Backup pré-expansão: ../backups-jogo-hordas/pre-catacumbas-expansao-20261109-145224.zip.
+- Ruling: sem Git; trabalhar no workspace autorizado com backup, sem criar repositório.
+- Reconhecimento paralelo concluído; contratos registrados no plano.
+- Ruling: conteúdo paralelo em ownership disjunto; root integra depois dos agentes.
+- Ruling: Chrome e suítes HTTP pesadas nunca em paralelo para evitar saturação.
+- Ruling: novas partidas versão3; preservar sem reinterpretar vitórias históricas versão2.
+- Ruling: progresso de campanha de contas vem do servidor; preferências e eventos cosméticos locais são isolados por perfil.
+- Task1 implementada: 19 checks novos +17 antigos verdes. P2 das ondas do Cataclismo corrigido com RED→GREEN e re-revisão aprovada. Evento MetaProgress integrado em progression.js.
+- Task2 implementada: 16 checks VM verdes; mapa, campanha e integração concluídos. Revisão independente registrada em campaign-exploration-review.md.
+- Task3 implementada: 14 checks VM verdes, hooks de pool/morte/áudio. Relatório task-3-report.md e revisão independente concluídos.
+- Task4: server/portal versão3 e migração aditiva implementados. Dois testes de Catacumbas RED→GREEN. Suíte HTTP completa final: 33 testes aprovados em 148,625 s; log api-test.log. A expectativa antiga de fim no Castelo foi atualizada para a conclusão das Catacumbas.
+- Task4 meta: js/meta.js implementado;6checks VM RED→GREEN de perfil/storage/milestones/loadout. Coleção/C/seleção/aparências e alternativas integradas em scenes.js. Preferências por perfil e eventos cosméticos locais; estatísticas de contas continuam do servidor.
+- Task4 integração: index/sprites carregam arte nova; game cria exploration/soundscape, prioridade interagir antes saída, bloqueia menus e retorna ao abrir interação, captura perfil/runId local, eventos no resultado convidado; stages salva/restaura relíquias+loadout antes poderes. state_transfer_checks RED→GREEN.
+- Primeiro Chrome integrado após hooks: --new-content passou 10 grupos, zero pageerrors. Helpers de regressão atualizados para a campanha de três fases; validação final sequencial em andamento.
+- Ruling: eventos MetaProgress.record(event,metaProfileKey): secret ID 'forest-oathkeeper', evolution 4IDs, altar '<stage>:altar_N', run ID estável no carry e contagem local somente convidado normal.
+- Retomada após créditos: não repetir Tasks 1–3. Produção implementada; revisão e integração em fechamento.
+- Task1 P2 Cataclismo corrigido e re-revisão aprovada; 19checks novos verdes, dano acompanha duas frentes visíveis.
+- Task3 P1 Guardião corrigido: isExplorationBoss usa dano comum e kb0; teste integrado damageEnemy real RED→GREEN. Exploração/áudio agora14checks.
+- Task3 P2 spawns corrigido: projectSpawn/spawnAway validam posição final após colisão; minis adiam sem desalojar. safe_spawns6checks verdes. Revisão independente aprovou.
+- Task4 P2 perfil: vitória/avanço convidado exigem origem guest; beginRun retorna profile_key após refresh e game adota essa origem. state_transfer3grupos RED→GREEN e re-revisão aprovada.
+- Browser áudio achou master com valor antigo por automação; applyMaster cancela automação anterior e escreve gain.value diretamente. M silencia fontes e volume imediatamente; browser real passou, revisão aprovada.
+- Browser novo passou áudio, altares, três símbolos/Guardião real, quatro evoluções e primeira passagem. A falha de E na escadaria foi isolada: Phaser apaga JustDown quando down/up chegam entre frames. Latch de interação preserva taps rápidos; teste Chrome focado RED→GREEN e campanha completa aprovados pelo implementador. Root repetirá o fluxo completo para gravar o log final.
+- Revisão do latch encontrou ação pendente atravessando pausa e autorepeat: limpeza em pause/sleep/blur/shutdown e consumo dos flags repetidos, com teste VM RED→GREEN. Re-revisão independente aprovada.
+- Cinco helpers antigos de regressão atualizados para três fases/13 receitas. Coleção, seleção, controles, cinema, sessões atrasadas, jornada autenticada e floresta já aprovados no Chrome sem erros JS. Relatório regression-helpers-report.md e logs individuais.
+- Guia de usuário novo: docs/CATACUMBAS-E-SEGREDOS.md; LEIA-ME atualizado.
+- Coleção Chrome: quatro grupos verdes, sem erros JS; bloqueio inicial, escolha real de aparência/poder, aplicação no herói e persistência após reload. Selects receberam nomes acessíveis explícitos; C cancela a ação padrão ao abrir para evitar seleção acidental de Canalizador.
+- Navegadores de regressão passaram: collection 4 grupos, selector 6, controls 8, forest-cinema, journey-regressions 6, journey 8 e forest 9; todas as execuções sem erros JS. A jornada autenticada preserva o runId nas duas passagens e salva a vitória final no ranking.
+- Retomada final: a suíte expansion encontrou Shift rápido perdido pelo mesmo descarte de JustDown no keyup. Teste ampliado para dash: quatro falhas RED confirmadas, correção queueAction aplicada pelo root e 10 grupos input GREEN. Shift/Espaço usam o latch requestDash já usado pelo toque, com descarte e cleanup iguais à interação. Revisão independente aprovada, inclusive 18 verificações adicionais com Key/JustDown reais do Phaser; input-final-review.md.
+- Helpers de browser fecham a página antiga antes de iniciar uma nova quando ela não será mais usada; mantém os asserts e coleta de pageerror. Uma falha isolada de carregamento da segunda página não se repetiu no reteste, sem causa estática demonstrada; pressão de memória permanece hipótese, não diagnóstico confirmado.
+- Conclusão em 10/11: expansion passou 12 grupos, catacombs passou o fluxo completo, controls passou 8 e accounts passou 7; zero pageerrors. Hardcore simulou 900 s com pico de 240 inimigos e limites respeitados; toque com dois dedos aprovado.
+- Lote final leve aprovado: 12 suítes, 103 checagens, sintaxe de 67 JS/CJS e py_compile de 4 Python. A única alteração concorrente era a expectativa do helper de grimório (13 receitas +6 relíquias), conferida novamente por sintaxe. Nenhuma produção mudou durante a validação.
+- Capturas conferidas e copiadas para capturas/; guia, plano e relatórios atualizados. Todas as sete novidades entregues, sem achados materiais abertos. Evidência consolidada em final-validation.md. Sem processos de teste restantes; contas e bancos usados nas suítes eram descartáveis.

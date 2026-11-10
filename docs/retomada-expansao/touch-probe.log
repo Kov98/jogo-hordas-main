@@ -1,0 +1,21 @@
+DASH STATE {
+  joy: {
+    active: true,
+    ox: 200,
+    oy: 550,
+    x: 0.8333333333333334,
+    y: 0,
+    id: 1
+  },
+  pointers: [
+    { id: 0, x: 0, y: 0, down: false },
+    { id: 1, x: 250, y: 550, down: true },
+    { id: 2, x: 0, y: 0, down: false }
+  ],
+  button: true,
+  touch: true
+}
+page.waitForFunction: Timeout 5000ms exceeded.
+    at /tmp/touch-probe.cjs:42:21 {
+  name: 'TimeoutError'
+}

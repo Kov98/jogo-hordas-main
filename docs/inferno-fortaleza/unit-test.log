@@ -1,0 +1,295 @@
+$ node tests/evolutions_relics_checks.cjs
+PASS four chest recipes require weapon 8, passive 1 and minute five, then cancel and replace base once
+PASS six optional relics validate IDs, remain unique and cap at three without changing passives
+PASS derived relic damage, rate, movement and conditional blood oath undo without drift
+PASS incoming penalties and all player/passive heals respect relic multipliers
+PASS twin seal doubles arrows, spears, fire and plasma within the global pool
+PASS fire_hurricane damages with existing modifiers, has bounded reusable effects and destroys cleanly
+PASS celestial_judgment damages with existing modifiers, has bounded reusable effects and destroys cleanly
+PASS plasma_storm damages with existing modifiers, has bounded reusable effects and destroys cleanly
+PASS meteor_cataclysm damages with existing modifiers, has bounded reusable effects and destroys cleanly
+PASS fire hurricane has ember damage and pulls commons without moving bosses
+PASS celestial judgment snapshots announced positions and cancels before the light detonates
+PASS plasma storm arcs reach a recycled UID without retaining an old enemy object
+PASS meteor cataclysm follows its announced spot with two damaging waves, each once per UID
+PASS cataclysm shows two separate wave fronts and damages a distant enemy only when the visible front reaches it
+PASS evolutions use area modifiers and are independent of a saturated projectile pool
+PASS each evolution and relic has a generated icon, and effects have distinct procedural textures
+PASS appearance tint returns after taking damage and clearing the flash
+PASS singularity never pulls official, mini or exploration bosses
+PASS frequency relics also change orbiting weapon contact frequency
+evolutions_relics_checks: 19 checks passed
+
+Exit: 0
+
+$ node tests/new_powers_checks.cjs
+PASS four common catalog entries, seven distinct upgrades and channeler starting values
+PASS cyclone level 1 deals real modified damage and stops after destroy
+PASS cyclone level 8 deals real modified damage and stops after destroy
+PASS radiant_beam level 1 deals real modified damage and stops after destroy
+PASS radiant_beam level 8 deals real modified damage and stops after destroy
+PASS plasma level 1 deals real modified damage and stops after destroy
+PASS plasma level 8 deals real modified damage and stops after destroy
+PASS meteor level 1 deals real modified damage and stops after destroy
+PASS meteor level 8 deals real modified damage and stops after destroy
+PASS beam pierces only its sustained strip and hits again by interval
+PASS cyclone advances and gently pulls common enemies, never bosses
+PASS recycled enemy object with a new UID can be hit by existing plasma shot
+PASS meteor stores impact coordinates when target object is recycled
+PASS meteor warning cancels before impact on destroy
+PASS plasma cleanup removes only its own pooled shots
+PASS fixed visual budgets and global 160 shot pool hold under extreme rate modifiers
+PASS cyclone ground footprint follows the damage center and all layers expire together
+PASS beam halo, emitter and impact visuals follow the active strip and stop at its end
+PASS procedural icons and all four weapon textures can be generated
+new_powers_checks: 19 checks passed
+
+Exit: 0
+
+$ node tests/catacombs_checks.cjs
+OK: three stage chain and exclusive ordinary/miniboss species
+OK: catacomb chambers, central arena, entry and corridors remain traversable
+OK: environment traps are capped, camera local, suspended during cinema and official boss
+OK: necromancer telegraphs seals, uses projectile pool and caps summoned souls
+OK: castle fatal hit synchronously locks damage/menu and reveals stairs without victory
+OK: death effects use current scene identity and cannot finish a newer run
+OK: second crossing advances explicit target once and carries build and totals
+OK: first crossing retains legacy wrapper and sends castle target
+OK: offline second crossing preserves the run and disables ranking only once
+OK: guest second crossing credits the target stage and refuses menus/closed exits
+OK: castle seal cinema restores controls and opens a safe physical stairway
+OK: boss factory selects necromancer and routes its pre-fight healing through Player.heal
+OK: difficulty selection preserves third stage
+OK: shutdown while advancement is pending cannot restart a new scene
+OK: shutdown settles pending network wait before its eventual response
+OK: necromancer defeat alone submits campaign victory with final stage
+Catacombs checks passed (16)
+
+Exit: 0
+
+$ node tests/safe_spawns_checks.cjs
+OK: species-radius projection rejects the Catacomb west-wall contact spawn
+OK: normal director does not publish unsafe projected positions or jitter them into a wall
+OK: ring, swarm and mixed packs validate every final species position
+OK: due minis defer unsafe projection, then use their actual radius without displacing an enemy
+OK: direct intentional summons keep requested coordinates and ordinary reservations
+OK: forest and castle directors and events retain safe reachable spawns
+
+Exit: 0
+
+$ node tests/meta_progress_checks.cjs
+OK: milestones gate and unlock real alternative powers and appearances
+OK: account switching isolates choices, achievements and late run events
+OK: guest results are deduplicated and accumulate unlock progress
+OK: reload restores permanent local progress
+OK: blocked storage preserves an in-memory playable profile
+OK: checkpoint loadout has priority over current profile preferences
+
+Exit: 0
+
+$ node tests/state_transfer_checks.cjs
+OK: carry/checkpoint saves relics and loadout; restores before powers without multiplying passive stats
+OK: campaign victory credits the originating guest profile, never an account that logged out
+OK: new-run identity is captured after session refresh, alongside the actual request
+
+Exit: 0
+
+$ node tests/interaction_input_checks.cjs
+OK: a quick released interaction tap survives until update and consumes both keys exactly once
+OK: queued interaction is discarded across pause, sleep and both blur boundaries
+OK: autorepeat after a paused Key reset cannot become a new interaction
+OK: blocked controls, cinematic resets and a new stage cannot queue interaction
+OK: shutdown detaches interaction listeners before the next scene build
+OK: a quick released dash tap survives until update and consumes both keys exactly once
+OK: queued dash is discarded across pause, sleep and both blur boundaries
+OK: autorepeat after a paused Key reset cannot become a new dash
+OK: blocked controls, cinematic resets and a new stage cannot queue dash
+OK: shutdown detaches dash listeners before the next scene build
+
+Exit: 0
+
+$ node tests/new_creatures_checks.cjs
+OK: fourteen forest creatures enter its director and remain absent from castle
+OK: forest_witch announces fixed positions, damage scaling, stagger and cooldown
+OK: forest_storm_mage announces fixed positions, damage scaling, stagger and cooldown
+OK: four cards fit and left/right, four shortcuts, pointer and lastChar reach every hero
+
+Exit: 0
+
+$ node tests/ambient_fx_checks.cjs
+OK: brasas visíveis, sem emissão distante/acúmulo e orçamento limitado
+
+Exit: 0
+
+$ node tests/gates_checks.cjs
+OK: closed facade blocks all widths and radii 12/24/40
+OK: open gate admits only central corridor, including diagonal and dash substeps
+OK: facade mask reserves wall interior and preserves the forest trail
+OK: castle south arrival remains free for radii 12/24/40
+OK: inset castle door shares solid south wall with a free central opening
+
+Exit: 0
+
+$ node tests/forest_cinema_checks.cjs --unit
+OK: direct dialogs, guide and admin blocked in all cinema states and CastleFinale
+OK: delayed HUD launch stays hidden in all cinema states and visible during normal gameplay
+
+Exit: 0
+
+$ node tests/exploration_audio_checks.cjs
+OK: altar cancellation is free; confirmation pays exact max-HP cost once and cannot kill
+OK: altar rechecks capacity, ownership, HP and other menus before charging
+OK: failed dialog creation releases its own pause and keeps the altar unconsumed
+OK: ambush uses a strict 35 percent threshold and the existing reserved-capacity pool
+OK: a modal stacked over the altar blocks confirmation and closing never resumes that modal
+OK: symbols, pending full-pool summon and snapshots preserve unique optional rewards
+OK: silent despawn, recycled UID and official boss cleanup never grant secret rewards
+OK: a won secret retries a full chest pool during the official fight without duplicating delivery
+OK: real player damage hurts and kills the pooled Guardian once without official-boss dispatch or knockback
+OK: random director excludes exploration-only, zero-weight and infinite-unlock entries
+OK: mute lowers an already running master immediately and soundscape stays bounded
+OK: pause, blur, dialog and shutdown stop every continuous node without an update tick
+OK: suspension also cuts playing SFX and missing WebAudio leaves exploration playable
+OK: procedural exploration textures and custom guardian frames generate without external assets
+
+Exit: 0
+
+$ node --check js\admin.js
+Exit: 0
+$ node --check js\ambience.js
+Exit: 0
+$ node --check js\art.js
+Exit: 0
+$ node --check js\audio.js
+Exit: 0
+$ node --check js\boss.js
+Exit: 0
+$ node --check js\catacombs-art.js
+Exit: 0
+$ node --check js\catacombs-boss.js
+Exit: 0
+$ node --check js\catacombs-enemies.js
+Exit: 0
+$ node --check js\catacombs.js
+Exit: 0
+$ node --check js\config.js
+Exit: 0
+$ node --check js\dash-art.js
+Exit: 0
+$ node --check js\data.js
+Exit: 0
+$ node --check js\difficulty.js
+Exit: 0
+$ node --check js\encounters.js
+Exit: 0
+$ node --check js\enemies.js
+Exit: 0
+$ node --check js\exploration.js
+Exit: 0
+$ node --check js\finale.js
+Exit: 0
+$ node --check js\forest-art.js
+Exit: 0
+$ node --check js\forest-boss.js
+Exit: 0
+$ node --check js\forest-enemies.js
+Exit: 0
+$ node --check js\forest.js
+Exit: 0
+$ node --check js\fx.js
+Exit: 0
+$ node --check js\game.js
+Exit: 0
+$ node --check js\guide.js
+Exit: 0
+$ node --check js\intro.js
+Exit: 0
+$ node --check js\landscape.js
+Exit: 0
+$ node --check js\logo.js
+Exit: 0
+$ node --check js\main.js
+Exit: 0
+$ node --check js\map.js
+Exit: 0
+$ node --check js\meta.js
+Exit: 0
+$ node --check js\phaser.min.js
+Exit: 0
+$ node --check js\player.js
+Exit: 0
+$ node --check js\portal.js
+Exit: 0
+$ node --check js\powers.js
+Exit: 0
+$ node --check js\progression.js
+Exit: 0
+$ node --check js\scenes.js
+Exit: 0
+$ node --check js\selection.js
+Exit: 0
+$ node --check js\soundscape.js
+Exit: 0
+$ node --check js\sprites.js
+Exit: 0
+$ node --check js\stage-art.js
+Exit: 0
+$ node --check js\stages.js
+Exit: 0
+$ node --check js\ui.js
+Exit: 0
+$ node --check js\util.js
+Exit: 0
+$ node --check tests\ambient_fx_checks.cjs
+Exit: 0
+$ node --check tests\browser_accounts.cjs
+Exit: 0
+$ node --check tests\browser_catacombs.cjs
+Exit: 0
+$ node --check tests\browser_collection.cjs
+Exit: 0
+$ node --check tests\browser_expansion.cjs
+Exit: 0
+$ node --check tests\browser_forest.cjs
+Exit: 0
+$ node --check tests\browser_inferno.cjs
+Exit: 0
+$ node --check tests\browser_journey.cjs
+Exit: 0
+$ node --check tests\browser_new_content.cjs
+Exit: 0
+$ node --check tests\browser_portal_controls.cjs
+Exit: 0
+$ node --check tests\catacombs_checks.cjs
+Exit: 0
+$ node --check tests\evolutions_relics_checks.cjs
+Exit: 0
+$ node --check tests\exploration_audio_checks.cjs
+Exit: 0
+$ node --check tests\finale_checks.cjs
+Exit: 0
+$ node --check tests\forest_cinema_checks.cjs
+Exit: 0
+$ node --check tests\gates_checks.cjs
+Exit: 0
+$ node --check tests\interaction_input_checks.cjs
+Exit: 0
+$ node --check tests\journey_regressions.cjs
+Exit: 0
+$ node --check tests\meta_progress_checks.cjs
+Exit: 0
+$ node --check tests\new_creatures_checks.cjs
+Exit: 0
+$ node --check tests\new_powers_checks.cjs
+Exit: 0
+$ node --check tests\safe_spawns_checks.cjs
+Exit: 0
+$ node --check tests\selector_checks.cjs
+Exit: 0
+$ node --check tests\state_transfer_checks.cjs
+Exit: 0
+
+$ py_compile server.py tests/browser_accounts.py tests/test_accounts.py
+Exit: 0
+
+{"ok": true, "suites": 12, "checks": 105, "syntax_files": 67, "python_files": 3}
