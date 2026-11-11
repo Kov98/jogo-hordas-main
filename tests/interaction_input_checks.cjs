@@ -24,7 +24,8 @@ function fixture() {
   ctx.Player = class { constructor() { this.sprite = visual(); this.shadow = visual(); } addPower() {} };
   ctx.ExplorationSystem = class { capture() { return {}; } };
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/game.js'), 'utf8') + '\nthis.GameClass=GameScene;', ctx);
-  const game = new ctx.GameClass(), keyboard = new EventEmitter(), events = new EventEmitter(), gameEvents = new EventEmitter();
+  const game = new ctx.GameClass(), keyboard = new EventEmitter(), input = new EventEmitter(), events = new EventEmitter(), gameEvents = new EventEmitter();
+  input.keyboard=keyboard;
   const keys = Object.fromEntries('W,A,S,D,UP,DOWN,LEFT,RIGHT,SHIFT,SPACE,E,ENTER'.split(',').map(name => [name, {
     isDown: false, _justDown: false, reset() { this.isDown = false; this._justDown = false; },
   }]));
@@ -32,14 +33,14 @@ function fixture() {
   const ui = { paused: false, lvlActive: false, scene: { setVisible() {} } };
   let active = true;
   Object.assign(game, { charId: 'hero', stageId: 'forest', stage: { number: 1 }, events,
-    input: { keyboard, on() {} }, game: { events: gameEvents, scene: { stop() {} } },
+    input, game: { events: gameEvents, scene: { stop() {} } },
     scene: { get: () => ui, launch() {}, isActive: () => active,
       pause() { active = false; events.emit('pause'); }, resume() { active = true; events.emit('resume'); } },
     add: { particles: visual, graphics: visual }, time: { delayedCall() {} }, cameras: { main: visual() },
   });
   const build = () => { game.buildScene({}); game.gameReady = true; };
   build();
-  return { game, keyboard, events, gameEvents, keys, ui, ctx, window, build };
+  return { game, keyboard, input, events, gameEvents, keys, ui, ctx, window, build };
 }
 
 const actions = [
@@ -120,5 +121,19 @@ test('shutdown detaches ' + action.name + ' listeners before the next scene buil
   assert.equal(f.game.readInput()[action.result], false);
 });
 }
+
+test('touch movement is released across pause, sleep and both blur boundaries without a pointerup',()=>{
+  for(const boundary of ['pause','sleep','gameBlur','windowBlur']){
+    const f=fixture(),pointer={id:1,x:100,y:200,wasTouch:true,isDown:true};
+    f.input.emit('pointerdown',pointer);pointer.x=160;f.input.emit('pointermove',pointer);
+    assert.equal(f.game.readInput().x,1,'touch movement must start before focus is lost');
+    if(boundary==='gameBlur')f.gameEvents.emit('blur');
+    else if(boundary==='windowBlur')f.window.emit('blur');
+    else{f.events.emit(boundary);f.events.emit(boundary==='pause'?'resume':'wake');}
+    const input=f.game.readInput();
+    assert.equal(input.x,0,boundary+' must not resume a joystick whose finger was released elsewhere');
+    assert.equal(input.y,0);assert.equal(f.game.joy.active,false);
+  }
+});
 
 if (failures.length) process.exitCode = 1;

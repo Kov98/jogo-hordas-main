@@ -112,7 +112,7 @@ class Boss {
       for (let i = 0; i < n; i++) {
         const a = base + (i - (n - 1) / 2) * D.spread + extra;
         const s = sc.enemyShots.fire('dark', this.x + Math.cos(a) * 50, this.y - 6 + Math.sin(a) * 40, a, 1,
-          { tex: 'sh_wave', speed: D.speed, dmg: D.dmg * this.damageMul, radius: 22, life: 3.6, rot: true, scale: 1 });
+          { tex: 'sh_wave', speed: D.speed * sc.difficulty.projectileMul, dmg: D.dmg * this.damageMul, radius: 22, life: 3.6, rot: true, scale: 1 });
         if (s) s.rotation = a + Math.PI; // a borda brilhante da onda aponta para a frente
       }
     };

@@ -295,7 +295,7 @@ function drawForestAssets(scene) {
       }
     }
   });
-  const gate = open => P => {
+  const gate = (open, lit = false) => P => {
     const { stone, panel, slit, ivy } = masonry(P, 9981);
     P.shadow(128, 158, 250);
     panel(4, 57, 248, 97); panel(66, 46, 124, 109);
@@ -310,12 +310,17 @@ function drawForestAssets(scene) {
       stone(x - 5, 144, 58, 11); stone(x - 6, 153, 60, 4, true);
     }
     // A abertura mede 48×3 = 144 pixels, a mesma largura da colisão.
-    P.r(104, 105, 48, 49, '#0b1b1d'); P.r(110, 96, 36, 12, '#0b1b1d');
-    P.r(118, 90, 20, 10, '#0b1b1d'); P.r(125, 87, 6, 5, '#0b1b1d');
+    const interior = lit ? '#fff' : '#0b1b1d';
+    P.r(104, 105, 48, 49, interior); P.r(110, 96, 36, 12, interior);
+    P.r(118, 90, 20, 10, interior); P.r(125, 87, 6, 5, interior);
     if (open) {
-      P.r(107, 105, 42, 48, '#152b2b'); P.r(113, 101, 30, 52, '#1e3430');
-      P.r(120, 104, 16, 49, '#344439'); P.r(126, 107, 4, 44, '#59634a');
-      for (let y = 121; y < 153; y += 9) { P.r(108, y, 40, 1, '#4d5b43'); P.r(124, y + 1, 1, 8, '#182e28'); }
+      // O branco ocupa o vão inteiro; as pedras desenhadas depois recortam
+      // o arco em degraus sem tingir a fachada nem deixar um centro escuro.
+      if (!lit) {
+        P.r(107, 105, 42, 48, '#152b2b'); P.r(113, 101, 30, 52, '#1e3430');
+        P.r(120, 104, 16, 49, '#344439'); P.r(126, 107, 4, 44, '#59634a');
+        for (let y = 121; y < 153; y += 9) { P.r(108, y, 40, 1, '#4d5b43'); P.r(124, y + 1, 1, 8, '#182e28'); }
+      }
       for (const x of [99, 152]) {
         P.r(x, 105, 5, 47, '#4f5540'); P.r(x, 105, 1, 47, '#a49a66');
         for (const y of [113, 139]) P.r(x, y, 5, 2, '#98a18b');
@@ -352,7 +357,8 @@ function drawForestAssets(scene) {
     P.line(179, 55, 176, 61, '#1c3530'); P.line(176, 61, 180, 70, '#1c3530');
   };
   make('gate_closed', 256, 160, gate(false), 3);
-  make('gate_open', 256, 160, gate(true), 3);
+  make('gate_dark', 256, 160, gate(true), 3);
+  make('gate_open', 256, 160, gate(true, true), 3);
   // Separate hinges keep the stone facade motionless during opening.
   for (const [side, offset] of [['left', 104], ['right', 128]]) {
     make('gate_leaf_' + side, 24, 67, P => {
@@ -431,7 +437,7 @@ function drawForestAssets(scene) {
     gr.addColorStop(1, 'rgba(205,46,6,0)');
     g.fillStyle = gr; g.fillRect(0, 0, 192, 192);
   });
-  for (const [key, color, strength] of [['glow_cool', '89,128,140', 0.4], ['shadow', '1,6,12', 0.78]]) {
+  for (const [key, color, strength] of [['glow_cool', '89,128,140', 0.4], ['glow_white', '255,255,255', 0.9], ['shadow', '1,6,12', 0.78]]) {
     SPR.canvas(scene, 'forest_' + key, 192, 192, g => {
       const gr = g.createRadialGradient(96, 96, 0, 96, 96, 96);
       gr.addColorStop(0, 'rgba(' + color + ',' + strength + ')');

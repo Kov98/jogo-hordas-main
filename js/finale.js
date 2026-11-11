@@ -5,6 +5,9 @@ class FinaleOverlayScene extends Phaser.Scene {
     this.add.rectangle(CONFIG.width / 2, 21, CONFIG.width, 42, 0x000000);
     this.add.rectangle(CONFIG.width / 2, CONFIG.height - 21, CONFIG.width, 42, 0x000000);
     this.caption = mkText(this, CONFIG.width / 2, CONFIG.height - 66, data.caption || 'O SILÊNCIO NÃO ERA O FIM.', 19, '#dec9a6').setOrigin(.5);
+    // ScenePlugin launches are queued. Callers may see this scene between a
+    // shutdown and its next create; never expose the destroyed Text then.
+    this.events.once('shutdown', () => { this.caption = null; });
   }
 }
 
@@ -117,6 +120,10 @@ class CastleFinale {
     if (t > 3.5) this.overlay.caption?.setText(t < 7 ? 'O SELO SE ROMPEU.' : 'SOB A ÚLTIMA MURALHA…');
     if (t > 9.4) this.overlay.caption?.setAlpha(clamp((10.8 - t) / 1.4, 0, 1));
     if (t >= 9.4 && !this.fading) { this.fading = true; sc.cameras.main.fadeOut(1400, 0, 0, 0); }
+    // Camera effects update before the scene. Catch up the first long frame to
+    // the film clock, including a frame that crosses the complete transition.
+    const fade = sc.cameras.main.fadeEffect;
+    if (t >= 9.4 && fade?.isRunning) fade.update(0, Math.max(0, (t - 9.4) * 1000 - fade.progress * fade.duration));
     if (t >= 11) {
       this.complete = true; sc.scene.stop('FinaleOverlay');
       const complete = this.onComplete; this.onComplete = null; complete?.();
@@ -165,6 +172,8 @@ class SoulFinale {
     if(step>0&&step<1)p.sprite.anims.resume();else p.sprite.anims.pause();sc.syncCinematicPlayer();
     if(t>4)sc.scene.get('FinaleOverlay').caption?.setText('NENHUMA ALMA PERTENCE À FORNALHA.');
     if(t>=7&&!this.fading){this.fading=true;sc.cameras.main.fadeOut(1800,24,8,7);}
+    const fade=sc.cameras.main.fadeEffect;
+    if(t>=7&&fade?.isRunning)fade.update(0,Math.max(0,(t-7)*1000-fade.progress*fade.duration));
     if(t>=9){this.complete=true;sc.scene.stop('FinaleOverlay');this.onComplete?.();}
   }
 }

@@ -8,6 +8,14 @@ for (const file of ['config', 'util', 'data']) run(fs.readFileSync(path.join(__d
 run('let ENEMY_UID=1; const FOREST_BOSS={name:"Forest"},FOREST_ENEMY_IDS=[],FOREST_EVENTS=[],CATACOMB_ENEMY_IDS=[],CATACOMB_EVENTS=[];');
 for (const file of ['boss', 'catacombs-boss', 'stages', 'player', 'finale', 'game']) run(fs.readFileSync(path.join(__dirname, '../js/' + file + '.js'), 'utf8'));
 
+// Load Phaser's real Fade effect without booting its DOM-dependent entry point.
+const phaserSource=fs.readFileSync(path.join(__dirname,'../js/phaser.min.js'),'utf8');
+const fadeSource=phaserSource.replace(/i\(85454\)\}\)\(\)\)\);$/, 'i(5020)})()));');
+assert.notEqual(fadeSource,phaserSource,'the bundled Phaser entry point must be located');
+const phaserContext=vm.createContext({module:{exports:{}},exports:{}});
+vm.runInContext(fadeSource,phaserContext);
+const FadeEffect=phaserContext.module.exports;
+
 function display(x=0,y=0) {
   const data={x,y,alpha:1,scaleX:1,scaleY:1,rotation:0,visible:true,tint:null,destroyed:false,lines:0,
     anims:{pause(){},resume(){},stop(){},isPlaying:true}};
@@ -21,6 +29,7 @@ function display(x=0,y=0) {
       if(k==='setRotation')t.rotation=args[0];
       if(k==='setAngle')t.rotation=args[0]*Math.PI/180;
       if(k==='setTint')t.tint=args[0];
+      if(k==='setText')t.text=args[0];
       if(k==='clearTint')t.tint=null;
       if(k==='destroy')t.destroyed=true;
       if(k==='lineTo')t.lines++;
@@ -38,10 +47,12 @@ function fixture(stage='castle') {
     add(config){const tween={config,elapsed:0,active:true,stop(){this.active=false;},remove(){this.active=false;}};tweens.push(tween);return tween;}};
   let now=0;
   g.time={delayedCall(ms,fn){scheduled.push({at:now+ms,fn});},addEvent(){}};
-  const camera={zoom:1,follow:null,center:{x:2000,y:2360},flash(){},shake(){},fadeIn(){},fadeOut(){this.fades=(this.fades||0)+1;},
+  const camera={zoom:1,follow:null,center:{x:2000,y:2360},emit(){},flash(){},shake(){},fadeIn(){},
+    fadeOut(duration,r,g,b){this.fades=(this.fades||0)+1;this.fadeEffect.start(true,duration,r,g,b,true);},
     stopFollow(){this.follow=null;},startFollow(target){this.follow=target;},setZoom(zoom){this.zoom=zoom;},zoomTo(zoom){this.zoom=zoom;},
     centerOn(x,y){this.center={x,y};},pan(x,y){this.centerOn(x,y);}};
   Object.defineProperty(camera,'worldView',{get(){const c=this.follow||this.center,w=1280/this.zoom,h=720/this.zoom;return {x:c.x-w/2,y:c.y-h/2,right:c.x+w/2,bottom:c.y+h/2,contains(x,y){return x>=this.x&&x<=this.right&&y>=this.y&&y<=this.bottom;}};}});
+  camera.fadeEffect=new FadeEffect(camera);
   g.cameras={main:camera};
   g.add=Object.fromEntries(['graphics','image','sprite','tileSprite'].map(k=>[k,display]));g.make={graphics:()=>display()};
   const ui={visible:true,ready:true,scene:{setVisible(value){ui.visible=value;}}},overlay={caption:display()};
@@ -76,13 +87,69 @@ function fixture(stage='castle') {
     for(const event of [...scheduled])if(!event.done&&event.at<=now){event.done=true;event.fn();}
     await flush();
   };
-  g.frame=async seconds=>{g.update(0,seconds*1000);await flush();};
+  g.frame=async seconds=>{camera.fadeEffect.update(0,seconds*1000);g.update(0,seconds*1000);await flush();};
   return g;
 }
 async function flush(){for(let i=0;i<12;i++)await Promise.resolve();}
 async function beginFall(g){g.damageEnemy(g.boss,g.boss.maxHp);await g.tick(2700);assert.ok(g.finale instanceof run('CastleFinale'),'CastleFinale must start after the knight death effects');return g.finale;}
 async function finishFall(g){await beginFall(g);await g.frame(11);return g.castleVictory;}
 const checks=[];const test=(name,fn)=>checks.push([name,fn]);
+
+test('a long castle film frame reaches an opaque fade before advancing',async()=>{
+  for(const steps of [[11],[9,2],[9.3,.8,.9]]){
+    const g=fixture();await beginFall(g);
+    let alphaAtRestart;
+    const restart=g.scene.restart;g.scene.restart=data=>{alphaAtRestart=g.cameras.main.fadeEffect.alpha;restart(data);};
+    for(const step of steps)await g.frame(step);
+    assert.equal(g.restarts.length,1,'the film still ends at eleven seconds');
+    assert.equal(alphaAtRestart,1,'the campaign must advance only after the fade is opaque');
+    assert.equal(g.cameras.main.fadeEffect.isComplete,true);
+  }
+});
+test('the castle fade catches up to film time when its start is crossed by a long frame',async()=>{
+  const g=fixture();await beginFall(g);await g.frame(9);await g.frame(1.1);
+  assert.ok(Math.abs(g.cameras.main.fadeEffect.alpha-.5)<1e-8,'10.1 seconds is halfway through the 9.4–10.8 fade');
+  assert.equal(g.restarts.length,0);
+});
+test('a long soul film frame reaches the final fade before showing the campaign result',async()=>{
+  for(const steps of [[9],[6,3],[6.5,1.4,1.1]]){
+    const g=fixture('catacombs');g.setCinematic('soul-finale');g.ended=true;
+    let completions=0,alphaAtEnd;
+    ctx.finaleGame=g;
+    g.finale=run('new SoulFinale(finaleGame,()=>{finaleGame.filmDone();})');
+    g.filmDone=()=>{completions++;alphaAtEnd=g.cameras.main.fadeEffect.alpha;};
+    for(const step of steps)await g.frame(step);
+    assert.equal(completions,1);assert.equal(alphaAtEnd,1,'the result must cover a completed fade');
+    g.finale.update(30);assert.equal(completions,1);
+  }
+});
+test('the soul film survives a queued overlay shutdown and restores its initial caption on launch',()=>{
+  const g=fixture('catacombs'),operations=[];
+  ctx.mkText=(scene,x,y,text)=>{const caption=display(x,y);caption.text=text;return caption;};
+  const overlay=run('new FinaleOverlayScene()');overlay.events=new EventEmitter();overlay.add={rectangle:display};
+  overlay.create({caption:'arrival'});let active=true;
+  const oldCaption=overlay.caption;
+  oldCaption.setText=text=>{if(oldCaption.destroyed)throw TypeError("Cannot read properties of null (reading 'cut')");oldCaption.text=text;return oldCaption;};
+  g.scene.get=key=>key==='UI'?g.ui:overlay;
+  g.scene.isActive=key=>key==='FinaleOverlay'?active:true;
+  g.scene.launch=(key,data)=>{if(key==='FinaleOverlay')operations.push(['start',data]);};
+  g.scene.stop=key=>{if(key==='FinaleOverlay')operations.push(['stop']);};
+  const drain=()=>{for(const [operation,data] of operations.splice(0)){
+    if(active){overlay.caption?.destroy();overlay.events.emit('shutdown');active=false;}
+    if(operation==='start'){overlay.create(data);active=true;}
+  }};
+  // Arrival completes, but ScenePlugin has not processed its queued stop when
+  // the next boss dies. Its death effects then outlive the stopped overlay.
+  g.setCinematic(null);g.setCinematic('necromancer-defeat','O ÚLTIMO SELO SE DESFAZ.');drain();
+  assert.equal(oldCaption.destroyed,true);assert.equal(active,false);
+  g.pShots.items=[];g.gems.items=[];g.player.powers=[];g.submitResult=()=>{};
+  assert.doesNotThrow(()=>g.onBossDefeated(),'a delayed launch must not write to a destroyed Text');
+  assert.ok(g.finale instanceof run('SoulFinale'));assert.equal(active,false);
+  drain();
+  assert.equal(active,true);assert.notEqual(overlay.caption,oldCaption);
+  assert.equal(overlay.caption.text,'AS CORRENTES DO ARQUIDEMÔNIO CEDEM.','the queued create must preserve the opening caption');
+  g.finale.update(4.1);assert.equal(overlay.caption.text,'NENHUMA ALMA PERTENCE À FORNALHA.');
+});
 
 test('fatal knight hit locks combat immediately, shows the old crack/lava/fall film, then advances exactly once',async()=>{
   const g=fixture(),advances=[];let victories=0;ctx.GamePortal.advanceRun=async(...args)=>{advances.push(args);return {stage:'catacombs'};};g.submitResult=()=>victories++;
@@ -164,5 +231,25 @@ test('the natural 900-second Inferno boss trigger frames the arena and both unch
   assert.equal(g.bossStarted,true);assert.equal(g.boss.data.name,'Arquidemônio das Cinzas');assert.equal(g.boss.x,2000);assert.equal(g.boss.y,1830);assert.equal(g.player.x,2000);assert.equal(g.player.y,2360);
   const camera=g.cameras.main;assert.equal(camera.follow,null);assert.equal(camera.zoom,.65);assert.equal(camera.center.x,2000);assert.equal(camera.center.y,2000);
   assert.ok(camera.worldView.contains(g.player.x,g.player.y));assert.ok(camera.worldView.contains(g.boss.x,g.boss.y));assert.ok(camera.worldView.contains(2000,1480));assert.ok(camera.worldView.contains(2000,2520));
+});
+test('a fatal hit stops the remaining combat and reward work in the same update',()=>{
+  for(const fatalPhase of ['enemies','boss','enemyShots','hazards']){
+    const g=fixture(),afterDeath=[];
+    g.player.powers=[];g.player.invuln=0;g.bossStarted=true;g.pendingLevels=0;
+    g.drawJoystick=()=>{};g.readInput=()=>({x:0,y:0});g.player.update=()=>{};g.grid={clear(){},insert(){}};
+    const phase=name=>()=>{if(g.ended)afterDeath.push(name);if(name===fatalPhase)g.player.takeDamage(100000);};
+    g.enemies.update=phase('enemies');g.encounters={update:phase('encounters')};g.boss.update=phase('boss');
+    g.pShots.update=phase('pShots');g.enemyShots.update=phase('enemyShots');g.gems.update=phase('gems');
+    g.updateHazards=phase('hazards');g.exploration={update:phase('exploration')};g.progression.update=phase('progression');
+    g.update(0,16);
+    assert.equal(g.player.dead,true);assert.equal(g.player.hp,0);
+    assert.deepEqual(afterDeath,[],fatalPhase+' must end combat before another system runs');
+  }
+});
+test('damage callbacks arriving after death cannot add enemy damage or kills to the result',()=>{
+  const g=fixture();g.player.invuln=0;g.player.takeDamage(100000);
+  const enemy={alive:true,hp:50,def:{},x:2000,y:2360,radius:10},before=g.totalDamage;
+  g.damageEnemy(enemy,10);
+  assert.equal(enemy.hp,50);assert.equal(g.totalDamage,before);
 });
 (async()=>{let failures=0;for(const [name,fn]of checks){try{await fn();console.log('OK: '+name);}catch(error){failures++;console.error('FAIL: '+name+'\n'+error.stack);}}if(failures)process.exitCode=1;else console.log(`Castle fall checks passed (${checks.length})`);})();

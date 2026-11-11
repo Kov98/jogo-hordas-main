@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 from server import create_server
 
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--portal-legion', action='store_true', help='Conferir admin, porta branca e novos inimigos do Inferno.')
 parser.add_argument('--inferno', action='store_true', help='Conferir fortaleza do Inferno, demônios, tornado e feixe de luz.')
 parser.add_argument('--catacombs', action='store_true', help='Conferir a terceira fase, evoluções, relíquias, altares, segredo e coleção.')
 parser.add_argument('--selector', action='store_true', help='Conferir seleção e progresso separado por perfil nas três fases.')
@@ -24,7 +25,7 @@ parser.add_argument('--forest', action='store_true', help='Conferir campanha Flo
 parser.add_argument('--expansion', action='store_true', help='Conferir poderes, evoluções, dash, encontros e dificuldades.')
 parser.add_argument('--controls', action='store_true', help='Conferir teclado e pausa após janelas de conta/ranking.')
 args = parser.parse_args()
-script = 'browser_inferno.cjs' if args.inferno else 'browser_catacombs.cjs' if args.catacombs else 'selector_checks.cjs' if args.selector else 'browser_collection.cjs' if args.collection else 'browser_new_content.cjs' if args.new_content else 'forest_cinema_checks.cjs' if args.forest_cinema else 'journey_regressions.cjs' if args.journey_regressions else 'browser_journey.cjs' if args.journey else 'browser_forest.cjs' if args.forest else 'browser_expansion.cjs' if args.expansion else 'browser_portal_controls.cjs' if args.controls else 'browser_accounts.cjs'
+script = 'browser_portal_legion.cjs' if args.portal_legion else 'browser_inferno.cjs' if args.inferno else 'browser_catacombs.cjs' if args.catacombs else 'selector_checks.cjs' if args.selector else 'browser_collection.cjs' if args.collection else 'browser_new_content.cjs' if args.new_content else 'forest_cinema_checks.cjs' if args.forest_cinema else 'journey_regressions.cjs' if args.journey_regressions else 'browser_journey.cjs' if args.journey else 'browser_forest.cjs' if args.forest else 'browser_expansion.cjs' if args.expansion else 'browser_portal_controls.cjs' if args.controls else 'browser_accounts.cjs'
 
 with tempfile.TemporaryDirectory(prefix='muralha-browser-') as folder:
     private = Path(folder) / 'dados'

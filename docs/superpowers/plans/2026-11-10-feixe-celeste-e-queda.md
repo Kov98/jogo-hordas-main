@@ -28,21 +28,21 @@ root integra texto/boss, adapta browsers e verifica todos os fluxos.
 **Owner files:** powers.js, progression.js, descrição/upgrades radiant_beam em data.js;
 new_powers_checks.cjs e teste focado se necessário.
 
-- [ ] RED: alvo fixo e área circular, aviso sem dano, movimento/UID e destruição.
-- [ ] Implementar coluna vinda do alto com selo/impacto e objetos reutilizados.
-- [ ] GREEN: níveis, multiplicadores, cap, expiração, evolução e sintaxe.
+- [x] RED: alvo fixo e área circular, aviso sem dano, movimento/UID e destruição.
+- [x] Implementar coluna vinda do alto com selo/impacto e objetos reutilizados.
+- [x] GREEN: níveis, multiplicadores, cap, expiração, evolução e sintaxe.
 
 ### Task 2 — Queda e passagem automática
 
 **Owner files:** game.js, finale.js, catacombs_checks.cjs e teste focado novo.
 
-- [ ] RED: derrotar Castelo inicia CastleFinale e avança após cair, uma vez.
-- [ ] Restaurar filme e compartilhar commit seguro do avanço com travessia existente.
-- [ ] Enquadrar arena do boss do Inferno, mantendo posições e horário.
-- [ ] GREEN: build/tempo/rede/shutdown e câmera/HUD restaurados.
+- [x] RED: derrotar Castelo inicia CastleFinale e avança após cair, uma vez.
+- [x] Restaurar filme e compartilhar commit seguro do avanço com travessia existente.
+- [x] Enquadrar arena do boss do Inferno, mantendo posições e horário.
+- [x] GREEN: build/tempo/rede/shutdown e câmera/HUD restaurados.
 
 ### Task 3 — Integração e verificação (root)
 
-- [ ] Atualizar seleção/guia, helpers de browser e teste normal do agendamento do boss.
-- [ ] Executar VM/sintaxe e Chrome com conta, feixe, lava/queda e boss visível.
-- [ ] Revisão independente, corrigir achados, capturas e relatório final.
+- [x] Atualizar seleção/guia, helpers de browser e teste normal do agendamento do boss.
+- [x] Executar VM/sintaxe e Chrome com conta, feixe, lava/queda e boss visível.
+- [x] Revisão independente, corrigir achados, capturas e relatório final.

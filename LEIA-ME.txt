@@ -32,6 +32,10 @@ O Inferno tem muralhas, correntes, fornalhas e criaturas demoníacas.
 Mini Tornado tem espirais e detritos. Feixe de Luz desce do céu sobre um selo no alvo.
 Guia da atualização visual: docs/INFERNO-E-MAGIA.md.
 Guia completo: docs/CATACUMBAS-E-SEGREDOS.md.
+Auditoria de bugs e correções: docs/auditoria-2026-11-11/README.md.
+O portão aberto da floresta tem interior e luz brancos; E/Enter inicia a travessia.
+O Inferno tem 11 espécies comuns, incluindo cinco reforços com arte e ataques próprios.
+Correção do admin, portal e novos inimigos: docs/portal-e-legiao/README.md.
 
 Onde editar:
   js/config.js      nome do jogo, textos e tempos da abertura, balanceamento, limites de desempenho, tempo do chefe

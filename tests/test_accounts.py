@@ -695,6 +695,13 @@ class BackendTests(unittest.TestCase):
             body = {'command': 'spawn', 'args': {'enemy': enemy, 'count': 2}}
             self.assertEqual(self.request('/api/admin/command', body)[:2], (200, body))
 
+    def test_admin_can_spawn_inferno_legion(self):
+        self.admin()
+        for enemy in ('inferno_ember_bat', 'inferno_chain_lancer', 'inferno_pyromancer',
+                      'inferno_furnace_golem', 'inferno_ash_reaper'):
+            body = {'command': 'spawn', 'args': {'enemy': enemy, 'count': 2}}
+            self.assertEqual(self.request('/api/admin/command', body)[:2], (200, body))
+
     def test_concurrent_finish_saves_once_and_password_revokes_other_session(self):
         self.register()
         self.unlock_castle()

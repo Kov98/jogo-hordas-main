@@ -4,9 +4,13 @@ A terceira fase agora é o **Inferno — Fortaleza das Correntes**, na direção
 escolhida pelo usuário: uma fortaleza demoníaca com correntes e fogo.
 
 Muralhas escuras, obsidiana, pilares com chifres, monólitos acorrentados,
-grades-fornalha, brasas e chamas animadas substituem a cripta azul. As seis
+grades-fornalha, brasas e chamas animadas substituem a cripta azul. As onze
 criaturas e os dois minibosses têm desenhos demoníacos próprios. O chefe
 final é o **Arquidemônio das Cinzas**.
+
+Os cinco reforços são Morcego da Fornalha, Lanceiro Acorrentado, Piromante
+do Abismo, Golem da Fornalha e Ceifador das Cinzas. Veja a
+[atualização do portal e da legião](portal-e-legiao/README.md).
 
 Derrote o Cavaleiro no Castelo: a arena racha, a lava aparece e o personagem
 cai. A tela escurece e a chegada ao Inferno acontece automaticamente,
@@ -27,10 +31,8 @@ Se a página estava aberta, use **Ctrl+F5**. **C** abre a coleção no menu,
 **G** mostra as receitas e **M** controla o áudio.
 
 O [guia de campanha e relíquias](CATACUMBAS-E-SEGREDOS.md) continua válido.
-Plano, revisões, logs e capturas desta atualização ficam em
-`docs/inferno-fortaleza/`.
-
-Foram aprovadas 105 checagens de jogo, dois testes HTTP de compatibilidade
-e os quatro fluxos de navegador. Veja a
-[verificação final](inferno-fortaleza/final-validation.md) e as
-[capturas](inferno-fortaleza/capturas/README.md).
+Plano e capturas da conversão inicial ficam em `docs/inferno-fortaleza/`.
+O fechamento do feixe celeste e da queda está na
+[verificação integrada](feixe-e-queda/final-validation.md).
+A [auditoria de 11/11/2026](auditoria-2026-11-11/README.md) registra as correções,
+os testes mais recentes e as capturas atuais.

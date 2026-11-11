@@ -60,6 +60,8 @@ ENEMIES = frozenset((
     'forest_witch', 'forest_storm_mage',
     'forest_oathkeeper', 'crypt_ghost', 'crypt_bone_archer', 'crypt_crawler',
     'crypt_acolyte', 'crypt_sentinel', 'crypt_banshee', 'crypt_executioner', 'crypt_soulkeeper',
+    'inferno_ember_bat', 'inferno_chain_lancer', 'inferno_pyromancer',
+    'inferno_furnace_golem', 'inferno_ash_reaper',
 ))
 EMPTY_COMMANDS = frozenset(('heal', 'boss', 'clear', 'maxpowers', 'killboss'))
 STAT_LIMITS = {

@@ -6,7 +6,7 @@ if (!base) throw new Error('Execute browser_accounts.py --controls.');
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome', headless: true,
     args: ['--no-sandbox', '--disable-background-timer-throttling', '--disable-renderer-backgrounding'] });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, hasTouch: true });
   page.setDefaultTimeout(10000);
   const errors = [], checks = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -74,6 +74,24 @@ if (!base) throw new Error('Execute browser_accounts.py --controls.');
     check('janelas sobrepostas só liberam o jogo ao fechar a última');
     for (let i = 0; i < 4; i++) { await open(i % 2 ? 'Ranking' : 'Entrar / Criar conta'); await closeX(); await moves(); }
     check('aberturas repetidas não deixam o teclado bloqueado');
+    const cdp = await page.context().newCDPSession(page);
+    const finger = { id: 1, x: 200, y: 550 };
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [finger] });
+    finger.x = 260;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [finger] });
+    await page.waitForFunction(() => GAME.scene.getScene('Game').joy.x > .5);
+    // Keep the physical touch held across a real dialog pause. A missed touchEnd
+    // must not turn the previous direction into movement after the dialog closes.
+    await page.evaluate(() => GamePortal.openLeaderboard());
+    await page.getByRole('dialog').waitFor();
+    assert(await page.evaluate(() => { const g = GAME.scene.getScene('Game'); return GAME.scene.isPaused('Game') && !g.joy.active && g.joy.x === 0 && g.joy.y === 0; }), 'Pausa não soltou o joystick móvel');
+    await closeX();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [finger] });
+    assert(await page.evaluate(() => { const g = GAME.scene.getScene('Game'); return !g.joy.active && g.readInput().x === 0 && g.readInput().y === 0; }), 'Toque antigo voltou a mover após fechar a janela');
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+    await moves();
+    check('toque real mantido durante pausa não prende o joystick ao retomar');
     assert(!errors.length, errors.join('; '));
     console.log(JSON.stringify({ ok: true, checks: checks.length, pageErrors: errors.length }));
   } finally { await browser.close(); }

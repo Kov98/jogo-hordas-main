@@ -3,7 +3,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const base=process.env.MURALHA_TEST_URL;
 if(!base)throw Error('Execute tests/browser_accounts.py --inferno');
-const artifacts=path.join(__dirname,'../docs/feixe-e-queda/capturas');
+const artifacts=path.join(__dirname,'../docs/portal-e-legiao/capturas/inferno');
 fs.mkdirSync(artifacts,{recursive:true});
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',headless:true,
@@ -25,7 +25,7 @@ fs.mkdirSync(artifacts,{recursive:true});
   });
   await page.goto(base+'/?nointro');await active('Menu');
   const guest=page.getByRole('button',{name:'Continuar como convidado',exact:true});if(await guest.count())await guest.click();
-  await page.evaluate(()=>GAME.scene.getScene('Menu').scene.start('StageSelect',{char:'channeler',stage:'catacombs'}));
+  await page.evaluate(()=>{GAME.scene.getScene('Menu').scene.start('StageSelect',{char:'channeler',stage:'catacombs'});});
   await active('StageSelect');
   assert(await page.evaluate(()=>{
    const s=GAME.scene.getScene('StageSelect');return s.cards[2].title==='INFERNO'&&s.cards[2].status.text==='ENTRAR NO INFERNO'&&GamePortal.getProgress().catacombs_clears===2;
@@ -38,15 +38,15 @@ fs.mkdirSync(artifacts,{recursive:true});
   await page.evaluate(()=>{
    const g=GAME.scene.getScene('Game');g.enemies.killAllSilently();
    for(const [i,id]of CATACOMB_ENEMY_IDS.entries()){
-    const e=g.enemies.spawn(id,900+(i%3)*200,950+Math.floor(i/3)*310,1);
+    const e=g.enemies.spawn(id,800+(i%4)*200,950+Math.floor(i/4)*170,1);
     if(!e)throw Error('Missing demon '+id);e.hp=e.maxHp=100000;e.def={...e.def,speed:0};
    }
   });
   await capture('fortaleza-e-demonios');
   assert(await page.evaluate(()=>{
-   const g=GAME.scene.getScene('Game');return g.enemies.pool.filter(e=>e.alive).length===6&&g.stage.bossName==='Arquidemônio das Cinzas';
+   const g=GAME.scene.getScene('Game');return CATACOMB_ENEMY_IDS.length===11&&g.enemies.pool.filter(e=>e.alive).length===11&&g.stage.bossName==='Arquidemônio das Cinzas';
   }));
-  check('fortress entrance, chains, fire and all six demon species render in real Phaser');
+  check('fortress entrance, chains, fire and all eleven demon species render in real Phaser');
   for(const id of ['cyclone','radiant_beam'])for(const level of [1,8]){
    const result=await page.evaluate(({id,level})=>{
     const g=GAME.scene.getScene('Game'),p=g.player;if(g.scene.isPaused())g.scene.resume();

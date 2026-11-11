@@ -286,7 +286,8 @@ class ForestWorld extends World {
     this.scene.add.tileSprite(this.W / 2, y + 25, this.W, 52, 'forest_wall_shadow').setDepth(-6020).setAlpha(0.72);
     this.decal('forest_shadow', x, y + 5, 3.8, 0.55).setScale(4.5, 0.8);
     this.decal('forest_gate_approach', x, y + 59, 1, 0.92).setDepth(-9810);
-    this.gateImage = this.prop('forest_gate_open', x, y);
+    // O fundo continua escuro enquanto as folhas se movem na cena do chefe.
+    this.gateImage = this.prop('forest_gate_dark', x, y);
     this.gateLeaves = [
       this.scene.add.image(x - 72, y - 18, 'forest_gate_leaf_left').setOrigin(0, 1),
       this.scene.add.image(x + 72, y - 18, 'forest_gate_leaf_right').setOrigin(1, 1),
@@ -294,9 +295,9 @@ class ForestWorld extends World {
     for (const leaf of this.gateLeaves) leaf.setDepth(y + 0.5).setTint(0xb4b8bf);
     this.forestLantern(x - 106, y - 57, { depth: y + 1, groundY: y + 8, scale: 2.1, alpha: 0.5 });
     this.forestLantern(x + 106, y - 57, { depth: y + 1, groundY: y + 8, scale: 2.1, alpha: 0.5 });
-    this.light(x, y - 65, 1.1, 0.035, 'forest_glow_warm');
+    this.light(x, y - 112, 1.1, 0, 'forest_glow_white');
     this.gateBeacon = this.lights[this.lights.length - 1];
-    this.gateSpill = this.decal('forest_glow_warm', x, y + 30, 1, 0.035).setScale(1.4, 0.65).setBlendMode(Phaser.BlendModes.ADD);
+    this.gateSpill = this.decal('forest_glow_white', x, y + 30, 1, 0).setScale(1.4, 0.65).setBlendMode(Phaser.BlendModes.ADD);
     this.decal('forest_stones', x - 130, y + 29, 0.8, 0.8);
     this.decal('forest_stones', x + 138, y + 46, 0.75, 0.8).setFlipX(true);
     for (const [tx, ty, type, scale] of [[185, 535, 'oak', 1.08], [278, 521, 'pine', 1], [this.W - 180, 540, 'oak', 1.08], [this.W - 277, 522, 'birch', 1]]) {
@@ -350,10 +351,11 @@ class ForestWorld extends World {
     this.gateOpen = true;
     this.arenaLock = false;
     this.hideBarrier();
-    this.gateImage.setTexture('forest_gate_open');
+    // A tintura fria dos objetos da mata não pode acinzentar o vão branco.
+    this.gateImage.setTexture('forest_gate_open').clearTint();
     for (const leaf of this.gateLeaves || []) leaf.setVisible(false);
-    this.gateBeacon.a = 0.37; this.gateBeacon.sc = 2;
-    this.gateSpill.setAlpha(0.3).setScale(1.8, 0.85);
+    this.gateBeacon.a = 0.37; this.gateBeacon.sc = 1.8;
+    this.gateSpill.setAlpha(0.34).setScale(1.9, 0.85);
   }
 
   isAtCastleDoor(entity) {

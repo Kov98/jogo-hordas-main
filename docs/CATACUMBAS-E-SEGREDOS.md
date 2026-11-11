@@ -10,7 +10,8 @@ o progresso das partidas anteriores. Veja [Inferno e magia](INFERNO-E-MAGIA.md).
 **Floresta Sombria → Castelo → Inferno.** Cada fase mantém o
 chefe aos 15 minutos e minibosses aos cinco e dez, com quatro dificuldades.
 
-Derrotar o Coração de Raízes abre o portão da floresta. Aproxime-se e use
+Derrotar o Coração de Raízes abre o portão da floresta, revelando o interior
+inteiramente branco e iluminado. Aproxime-se e use
 **E/Enter** ou o botão de interação para entrar no Castelo.
 Após derrotar o Cavaleiro Sombrio, a arena racha e o herói cai na lava;
 a chegada ao Inferno é automática, com armas, relíquias, passivas e dash.
@@ -21,7 +22,9 @@ O Inferno é uma fortaleza demoníaca com muralhas de obsidiana, correntes,
 grades-fornalha, monólitos acorrentados, espinhos e braseiros. Os ataques
 das armadilhas são anunciados no chão. Sua população inclui Diabrete das
 Brasas, Arqueiro Infernal, Cão das Correntes, Cultista da Fornalha,
-Sentinela de Obsidiana e Súcubo das Cinzas. Os minibosses são Carrasco
+Sentinela de Obsidiana, Súcubo das Cinzas, Morcego da Fornalha, Lanceiro
+Acorrentado, Piromante do Abismo, Golem da Fornalha e Ceifador das Cinzas.
+Os minibosses são Carrasco
 Acorrentado e Carcereiro Infernal.
 
 Quem já havia concluído o castelo na versão anterior encontra o Inferno

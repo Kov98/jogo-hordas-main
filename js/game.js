@@ -53,6 +53,9 @@ class GameScene extends Phaser.Scene {
     const run = this.carry ? this.carry.run : await GamePortal.beginRun(this.charId, practice, this.difficultyId, this.stageId).catch(error => ({ error: error.message, status: error.status }));
     if (this.initialization !== initialization) return;
     if (!this.carry && run?.profile_key) this.metaProfileKey = run.profile_key;
+    // A phase retry belongs to the profile that captured it. Session refresh
+    // may choose a different profile while beginRun is pending.
+    if (this.checkpoint && this.checkpoint.metaProfileKey !== this.metaProfileKey) this.checkpoint = null;
     if (this.stageId !== 'forest' && run?.status === 403) {
       GamePortal.notice(run.error || 'Esta fase ainda está bloqueada.');
       this.scene.start('StageSelect', { char: this.charId });
@@ -140,6 +143,7 @@ class GameScene extends Phaser.Scene {
     this.exploration = new ExplorationSystem(this, this.checkpoint?.exploration || {});
     this.soundscape = new Soundscape(this);
     this.phaseCheckpoint = {
+      metaProfileKey: this.metaProfileKey,
       player: capturePlayerState(this.player),
       exploration: this.exploration.capture(),
       consumed: [...this.progression.consumed], completed: [...this.progression.completed],
@@ -183,6 +187,8 @@ class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE',queueDash);
     const discardActions = () => {
       this.requestInteract = false; this.requestDash = false;
+      if (this.joy) { this.joy.active = false; this.joy.x = 0; this.joy.y = 0; }
+      this.joyG?.clear();
       this.keys.E.reset(); this.keys.ENTER.reset();
       this.keys.SHIFT.reset(); this.keys.SPACE.reset();
     };
@@ -425,7 +431,7 @@ class GameScene extends Phaser.Scene {
   }
 
   damageEnemy(e, dmg, src) {
-    if (this.cinematic || !e.alive || dmg <= 0) return;
+    if (this.cinematic || this.ended || !e.alive || dmg <= 0) return;
     if (e.isBoss && !e.isExplorationBoss) {
       const before = e.hp;
       if (e.hurt(dmg)) {
@@ -603,7 +609,7 @@ class GameScene extends Phaser.Scene {
     }
     if(this.stageId!=='catacombs')return;
     this.finalVictoryStarted=true;
-    this.setCinematic('soul-finale','AS CORRENTES DO INFERNO SE ROMPEM.');
+    this.setCinematic('soul-finale','AS CORRENTES DO ARQUIDEMÔNIO CEDEM.');
     this.ended = true;
     this.spawningEnabled = false;
     this.enemyShots.clear(); this.hazards.length = 0; this.fx.ground.length = 0;
@@ -785,15 +791,19 @@ class GameScene extends Phaser.Scene {
     if (this.boss && this.boss.alive) this.grid.insert(this.boss);
 
     this.player.update(dt, input, this.world);
-    if (this.cinematic) return;
+    if (this.cinematic || this.ended) return;
     this.enemies.update(dt);
+    if (this.cinematic || this.ended) return;
     this.encounters.update(dt);
     if (this.boss) this.boss.update(dt);
+    if (this.cinematic || this.ended) return;
     this.pShots.update(dt);
-    if (this.cinematic) return;
+    if (this.cinematic || this.ended) return;
     this.enemyShots.update(dt);
+    if (this.cinematic || this.ended) return;
     this.gems.update(dt);
     this.updateHazards(dt);
+    if (this.cinematic || this.ended) return;
     this.fx.update(dt);
     this.world.update(dt, this.visualTime);
     this.exploration?.update(dt);

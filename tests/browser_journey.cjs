@@ -6,8 +6,8 @@ const {execFileSync}=require('node:child_process');
 const base=process.env.MURALHA_TEST_URL;
 if(!base||!process.env.MURALHA_TEST_DATA_DIR)throw Error('Use browser_accounts.py --journey');
 const assert=(ok,msg)=>{if(!ok)throw Error(msg);};
-const out='/tmp/muralha-jornada';fs.mkdirSync(out,{recursive:true});
-const fallArtifacts=path.join(__dirname,'../docs/feixe-e-queda/capturas/browser-journey');fs.mkdirSync(fallArtifacts,{recursive:true});
+const out=path.join(__dirname,'../docs/auditoria-2026-11-11/capturas/jornada');fs.mkdirSync(out,{recursive:true});
+const fallArtifacts=out;
 const ready=(page,stage)=>page.waitForFunction(stage=>{const g=window.GAME?.scene.getScene('Game');return g?.gameReady&&GAME.scene.isActive('Game')&&g.stageId===stage&&!g.cinematic&&!g.cameras.main.fadeEffect.isRunning;},stage);
 const killBoss=page=>page.evaluate(()=>{
   const g=GAME.scene.getScene('Game');g.godMode=true;g.spawningEnabled=false;g.pendingLevels=0;g.t=900;g.startBossFight();g.boss.invuln=false;g.damageEnemy(g.boss,g.boss.hp+1,null);
@@ -144,10 +144,15 @@ async function auth(page,name,register){
     await account.waitForFunction(()=>GAME.scene.getScene('Game').stageCleared&&!GAME.scene.getScene('Game').cinematic);
     await account.evaluate(async()=>{const g=GAME.scene.getScene('Game');g.player.x=g.world.gate.x;g.player.y=g.world.gate.y+70;await g.enterCastle();});
     await ready(account,'castle');ageRun(run,'castle');
+    assert(await account.evaluate(()=>{const g=GAME.scene.getScene('Game'),c=g.phaseCheckpoint;return c.metaProfileKey===g.metaProfileKey&&c.player.powers.some(w=>w.id==='frost'&&w.level===2)&&c.player.relics.includes('twin_seal');}),'Checkpoint real deve registrar perfil e build de entrada');
     assert(await account.evaluate(async id=>(await GAME.scene.getScene('Game').runStart).run_id===id,run),'Primeira passagem autenticada trocou runId');
-    await killBoss(account);await castleFall(account,'conta-castelo');ageRun(run,'catacombs');
+    await killBoss(account);await castleFall(account,'conta-castelo');
     assert(await account.evaluate(async id=>(await GAME.scene.getScene('Game').runStart).run_id===id,run),'Segunda passagem autenticada trocou runId');
-    assert(await account.evaluate(()=>{const g=GAME.scene.getScene('Game'),p=g.player;return g.elapsedBefore>=1800&&g.t<3&&p.hasPower('frost')?.level===2&&p.relics.includes('twin_seal')&&p.dashLevel===3&&p.dashSmoke&&g.metaProfileKey===window.__accountProfile.key&&g.metaRunId===window.__accountProfile.run&&!g.isPractice&&!g.saveError&&GAME.scene.isVisible('UI');}),'Queda autenticada perdeu build, relíquia, dash, perfil, relógio ou classificação');
+    const arrival=await account.evaluate(()=>{const g=GAME.scene.getScene('Game'),p=g.player;return {elapsed:g.elapsedBefore,time:g.t,frost:p.hasPower('frost')?.level,relic:p.relics.includes('twin_seal'),dash:p.dashLevel,smoke:p.dashSmoke,profile:g.metaProfileKey===window.__accountProfile.key,identity:g.metaRunId===window.__accountProfile.run,practice:g.isPractice,error:g.saveError,hud:GAME.scene.isVisible('UI')};});
+    assert(arrival.elapsed>=1800&&arrival.time<3&&arrival.frost===2&&arrival.relic&&arrival.dash===3&&arrival.smoke&&arrival.profile&&arrival.identity&&!arrival.practice&&!arrival.error&&arrival.hud,'Queda autenticada perdeu build, relíquia, dash, perfil, relógio ou classificação: '+JSON.stringify(arrival));
+    // Inspect the arrival before the synchronous disposable-DB clock edit:
+    // Python startup can take several seconds while Phaser keeps running.
+    ageRun(run,'catacombs');
     await account.evaluate(()=>{
       const g=GAME.scene.getScene('Game');g.godMode=true;g.t=900;g.startBossFight();g.boss.invuln=false;g.damageEnemy(g.boss,g.boss.hp+1,null);
     });

@@ -4,7 +4,7 @@ const base=process.env.MURALHA_TEST_URL;
 if(!base)throw Error('Use browser_accounts.py --journey-regressions');
 const blankProgress={castle_unlocked:false,forest_clears:0,castle_clears:0,catacombs_unlocked:false,catacombs_clears:0};
 const blankStats={runs:0,victories:0,kills:0,damage:0,points:0,best_points:0};
-const artifacts=path.join(__dirname,'../docs/feixe-e-queda/capturas/journey-regressions');fs.mkdirSync(artifacts,{recursive:true});
+const artifacts=path.join(__dirname,'../docs/auditoria-2026-11-11/capturas/regressoes');fs.mkdirSync(artifacts,{recursive:true});
 const ready=(page,stage)=>page.waitForFunction(stage=>{const g=window.GAME?.scene.getScene('Game');return g?.gameReady&&GAME.scene.isActive('Game')&&g.stageId===stage&&!g.cinematic&&!g.cameras.main.fadeEffect.isRunning;},stage,{timeout:40000});
 const killBoss=page=>page.evaluate(()=>{
   const g=GAME.scene.getScene('Game');g.godMode=true;g.spawningEnabled=false;g.pendingLevels=0;g.t=900;g.startBossFight();g.boss.invuln=false;g.damageEnemy(g.boss,g.boss.hp+1,null);
@@ -13,7 +13,7 @@ const killBoss=page=>page.evaluate(()=>{
   const b=await chromium.launch({executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding']});
   const failures=[],errors=[],network=[];let checks=0;
   const watch=page=>{
-    page.on('pageerror',e=>errors.push(e.message));
+    page.on('pageerror',e=>{errors.push(e.stack||e.message);console.error('PAGE ERROR',e.stack||e.message);});
     page.on('requestfailed',r=>network.push({url:r.url(),error:r.failure()?.errorText}));
     page.on('response',r=>{if(r.status()>=400)network.push({url:r.url(),status:r.status()});});
   };
@@ -46,7 +46,7 @@ const killBoss=page=>page.evaluate(()=>{
 
     // Restart during a real CastleFinale, then force the old object beyond its
     // completion point. Its callback must not touch the replacement campaign.
-    await p.evaluate(()=>GAME.scene.getScene('Game').scene.restart({char:'mage',stage:'castle'}));await ready(p,'castle');
+    await p.evaluate(()=>{GAME.scene.getScene('Game').scene.restart({char:'mage',stage:'castle'});});await ready(p,'castle');
     await killBoss(p);await p.waitForFunction(()=>GAME.scene.getScene('Game').finale instanceof CastleFinale);
     await p.evaluate(()=>{const g=GAME.scene.getScene('Game');window.__cancelledFinale=g.finale;window.__cancelledVictory=g.castleVictory;window.__cancelledInitialization=g.initialization;g.scene.restart({char:'mage',stage:'forest'});});
     await ready(p,'forest');

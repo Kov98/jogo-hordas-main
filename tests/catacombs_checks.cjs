@@ -15,7 +15,7 @@ test('three stage chain and exclusive ordinary/miniboss species', () => {
   assert.equal(run('resolveStage("castle").next'), 'catacombs');
   assert.equal(run('resolveStage("catacombs").number'), 3);
   assert.equal(run('STAGES.catacombs.next'), null);
-  assert.equal(run('CATACOMB_ENEMY_IDS.length'), 6);
+  assert.equal(run('CATACOMB_ENEMY_IDS.length'), 11);
   assert.equal(run('STAGES.catacombs.minis.length'), 2);
   assert.equal(run('STAGES.castle.enemyIds.some(id => ENEMIES[id].stage && ENEMIES[id].stage !== "castle")'), false);
   assert.equal(run('[...CATACOMB_ENEMY_IDS,...STAGES.catacombs.minis].every(id => ENEMIES[id].stage === "catacombs" && ENEMY_ART[id].custom)'), true);

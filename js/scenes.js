@@ -267,10 +267,13 @@ class EndScene extends Phaser.Scene {
   again() {
     if (this.done) return; this.done = true;
     this.game.scene.stop('UI');
+    const profileKey = typeof MetaProgress !== 'undefined' ? MetaProgress.profileKey()
+      : GamePortal.user ? 'user.' + GamePortal.user.id : 'guest';
+    const checkpoint = this.d.checkpoint?.metaProfileKey === profileKey ? this.d.checkpoint : null;
     this.scene.start('Game', {
       char: this.d.char, difficulty: this.d.difficulty,
       stage: this.d.win ? this.d.startStage || 'forest' : this.d.stage || 'forest',
-      checkpoint: this.d.win ? null : this.d.checkpoint,
+      checkpoint: this.d.win ? null : checkpoint,
     });
   }
   menu() {

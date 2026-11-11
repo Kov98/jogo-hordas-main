@@ -80,8 +80,8 @@ class Gems {
       if (s.mag) {
         s.spd = Math.min(700, s.spd + 1400 * dt);
         const d = Math.sqrt(d2) || 1;
+        if (d < 16 || s.spd * dt >= d) { this.collect(s); continue; }
         s.x += dx / d * s.spd * dt; s.y += dy / d * s.spd * dt;
-        if (d < 16) { this.collect(s); continue; }
       } else {
         s.y += Math.sin(s.t * 4) * 0.12;
       }
@@ -311,7 +311,7 @@ class EnemyManager {
       sc.grid.query(p.x, p.y, p.radius, this.tmp);
       for (let i = 0; i < this.tmp.length; i++) {
         const e = this.tmp[i];
-        if (e.isBoss || e.contactCd > 0 || !e.def.dmg) continue;
+        if (!e.alive || e.isBoss || e.contactCd > 0 || !e.def.dmg) continue;
         const mul = e.state === 'charge' ? 1.35 : 1;
         if (p.takeDamage(e.def.dmg * dmgScale * mul)) { e.contactCd = 0.5; break; }
       }

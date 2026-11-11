@@ -7,9 +7,12 @@ const GameAdmin = window.GameAdmin = {
   },
   async execute(command, args = {}) {
     if (!GamePortal.isAdmin) throw new Error('Acesso exclusivo do administrador.');
+    const origin = this.game(), initialization = origin.initialization, player = origin.player;
+    const userId = GamePortal.user?.id, csrf = GamePortal.csrf;
     const result = await GamePortal.request('/api/admin/command', { method: 'POST', body: { command, args } });
-    if (!GamePortal.isAdmin) throw new Error('Sua sessão de administrador terminou.');
+    if (!GamePortal.isAdmin || GamePortal.user?.id !== userId || GamePortal.csrf !== csrf) throw new Error('Sua sessão de administrador terminou.');
     const g = this.game(), p = g.player, a = result.args || {};
+    if (g !== origin || g.initialization !== initialization || p !== player) throw new Error('Esta partida foi substituída. Envie o comando novamente.');
     g.isPractice = true;
     switch (result.command) {
       case 'stats':
@@ -63,7 +66,8 @@ const GameAdmin = window.GameAdmin = {
     const node = (tag, text, className) => { const el = document.createElement(tag); if (text) el.textContent = text; if (className) el.className = className; return el; };
     const nav = node('div', '', 'admin-tabs'), content = node('div', '', 'admin-content');
     const status = node('p', '', 'admin-status'); status.setAttribute('role', 'status');
-    dialog.body.append(nav, content, status);
+    dialog.body.append(nav, content);
+    dialog.footer.append(status);
     const button = (label, fn, parent = content) => { const b = node('button', label); b.type = 'button'; b.addEventListener('click', fn); parent.append(b); return b; };
     const field = (parent, label, value, { min = 0, max = 1000000, step = 'any', type = 'number' } = {}) => {
       const wrap = node('label', label, 'admin-field'), input = document.createElement('input');
